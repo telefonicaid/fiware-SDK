@@ -1,15 +1,22 @@
-This library is under development and it is aimed at making it easier for Javascript developers to manage context information. It is not intended to cover all the functionalities offered by the Orion REST API and you might need to use the latter in certain cases.  
+This library is **under development** and it is aimed at making it easier for Javascript developers to manage context information.
+It is not intended to cover all the functionalities offered by the Orion REST API and you might need to use the latter in certain cases.
 
 The library is aligned with best practices of Javascript development:
 * makes use of Promises
-* it is intended to work both in Web Browsers and Node environments.
+* it is intended to work both in Web Browsers (to be implemented) and Node environments.
 
-Basic usage
+### Installation
+
+````
+npm install fiware-orion-client
+````
+
+### Basic usage
 
 ```js
 const ORION_SERVER = 'http://130.206.83.68:1026/v1';
 
-var Orion = require('./orion-lib'),
+var Orion = require('fiware-orion-client'),
     OrionClient = new Orion.Client({
       url: ORION_SERVER
     });
@@ -36,4 +43,4 @@ OrionClient.queryContext(queryOptions).then(function(contextData) {
     console.log('Error while querying context: ', error);
 });
 
-```` 
+````
