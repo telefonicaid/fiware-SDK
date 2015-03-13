@@ -17,15 +17,9 @@
 
 var Request = require('request');
 
-var contextData = {
-  type: 'Car',
-  id: 'car1',
-  speed: 98
-};
-
 const PROPERTY_MAP = {
   'type': 'type',
-  'id'  : 'id'
+  'id' : 'id'
 };
 
 const TYPE_MAP = {
@@ -39,6 +33,7 @@ function OrionClient(options) {
 }
 
 function updateContext(contextData) {
+  /*jshint validthis:true */
   var self = this;
 
   return new Promise(function(resolve, reject) {
@@ -71,8 +66,6 @@ function updateContext(contextData) {
       updateAction: 'APPEND'
     };
 
-    console.log(JSON.stringify(contentData));
-
     Request({
       method: 'POST',
       url: self.url + '/updateContext',
@@ -83,7 +76,6 @@ function updateContext(contextData) {
       body: contentData,
       json: true
     }, function(error, response, body) {
-        console.log('Response from the context broker!!');
         if (error) {
           reject(error);
           return;
@@ -94,7 +86,7 @@ function updateContext(contextData) {
           });
           return;
         }
-        var responses =  body.contextResponses;
+        var responses = body.contextResponses;
         var statusCode = Array.isArray(responses) &&
                           responses[0].statusCode.code;
         if (body.errorCode || statusCode != 200) {
@@ -108,6 +100,7 @@ function updateContext(contextData) {
 }
 
 function queryContext(queryOptions) {
+  /*jshint validthis:true */
   var self = this;
 
   return new Promise(function(resolve, reject) {
@@ -139,7 +132,6 @@ function queryContext(queryOptions) {
       body: apiData,
       json: true
     }, function(error, response, body) {
-        console.log('Response from the context broker!!');
         if (error) {
           reject(error);
           return;
@@ -150,8 +142,7 @@ function queryContext(queryOptions) {
           });
           return;
         }
-        var responses =  body.contextResponses;
-        console.log('Responses: ', responses);
+        var responses = body.contextResponses;
         var statusCode = Array.isArray(responses) &&
                           responses[0].statusCode.code;
         if (body.errorCode || statusCode != 200) {
@@ -172,7 +163,7 @@ function toObject(contextElement) {
 
   contextElement.attributes.forEach(function(aAttr) {
     var value = aAttr.value;
-    if(aAttr.type !== 'string') {
+    if (aAttr.type !== 'string') {
       value = Number(aAttr.value);
     }
     out[aAttr.name] = value;
@@ -184,6 +175,6 @@ function toObject(contextElement) {
 OrionClient.prototype = {
   updateContext: updateContext,
   queryContext: queryContext
-}
+};
 
 exports.Client = OrionClient;
