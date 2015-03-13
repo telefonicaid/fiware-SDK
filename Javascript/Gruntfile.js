@@ -40,7 +40,7 @@ module.exports = function(grunt) {
 
     mochacli: {
       options: {
-        harmony: true,
+        harmony: true
       },
       all: ['orion/test/*.js']
     }
