@@ -1,0 +1,20 @@
+{
+  "name": "FIWARE-Orion-Lib",
+  "version": "0.1.0",
+  "description": "A client Library that makes it easier to get access to Orion Context Broker (part of the FIWARE platform)",
+  "main": "orion-lib.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "request": "^2.53.0"
+  },
+  "devDependencies": {
+    "mocha": "^2.2.1"
+  },
+  "scripts": {
+    "test": "mocha --harmony"
+  },
+  "author": "José M. Cantera - FIWARE Team",
+  "license": "M.I.T."
+}
