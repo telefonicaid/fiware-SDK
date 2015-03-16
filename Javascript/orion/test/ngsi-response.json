@@ -1,0 +1,22 @@
+{
+  "contextResponses": [
+    {
+      "contextElement": {
+        "attributes": [
+          {
+            "name": "speed",
+            "type": "float",
+            "value": "98"
+          }
+        ],
+        "type": "Car",
+        "isPattern": false,
+        "id": "P-9878KL"
+      },
+      "statusCode": {
+        "code": 200,
+        "reasonPhrase": "OK"
+      }
+    }
+  ]
+}

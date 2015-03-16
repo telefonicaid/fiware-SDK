@@ -27,41 +27,90 @@ const TYPE_MAP = {
   'number': 'float'
 };
 
+var NgsiParser = {
+  parse: function(jsonChunk) {
+    var ngsiData = jsonChunk;
+    if (typeof jsonChunk === 'string') {
+      ngsiData = JSON.parse(jsonChunk);
+    }
+
+    var responses = ngsiData.contextResponses;
+    var statusCode = Array.isArray(responses) &&
+                          responses[0].statusCode.code;
+    if (ngsiData.errorCode || statusCode != 200) {
+      return {
+        inError: true,
+        errorCode: ngsiData.errorCode || statusCode
+      };
+    }
+
+    return this._toObject(responses[0].contextElement);
+  },
+
+  stringify: function(object) {
+    return JSON.stringify({
+      contextElements: [this.toNgsiObject(object)]
+    });
+  },
+
+  // Converts an object to a NGSI Object
+  toNgsiObject: function(object) {
+    var out = {
+      isPattern: false
+    };
+
+    var keys = Object.keys(object);
+    keys.forEach(function(aKey) {
+      var mapped = PROPERTY_MAP[aKey];
+
+      if (mapped) {
+        out[mapped] = object[aKey];
+        return;
+      }
+
+      out.attributes = out.attributes || [];
+
+      out.attributes.push({
+        name: aKey,
+        value: object[aKey],
+        type: TYPE_MAP[typeof object[aKey]]
+      });
+    });
+
+    return out;
+  },
+
+  _toObject: function(contextElement) {
+    var out = Object.create(null);
+
+    out.type = contextElement.type;
+    out.id = contextElement.id;
+
+    contextElement.attributes.forEach(function(aAttr) {
+      var value = aAttr.value;
+      if (aAttr.type !== 'string') {
+        value = Number(aAttr.value);
+      }
+      out[aAttr.name] = value;
+    });
+
+    return out;
+  }
+};
+
 function OrionClient(options) {
   this.options = options;
   this.url = options.url;
 }
 
-function updateContext(contextData) {
+function updateContext(contextData, options) {
   /*jshint validthis:true */
   var self = this;
 
   return new Promise(function(resolve, reject) {
-    var apiContextData = {
-      isPattern: false,
-      attributes: []
-    };
-
-    var keys = Object.keys(contextData);
-    var attrList = apiContextData.attributes;
-    keys.forEach(function(aKey) {
-      var mapped = PROPERTY_MAP[aKey];
-
-      if (mapped) {
-        apiContextData[mapped] = contextData[aKey];
-        return;
-      }
-
-      attrList.push({
-        name: aKey,
-        value: contextData[aKey],
-        type: TYPE_MAP[typeof contextData[aKey]]
-      });
-    });
-
     var contentData = {
       contextElements: [
-        apiContextData
+        NgsiParser.toNgsiObject(contextData)
       ],
       updateAction: 'APPEND'
     };
@@ -71,10 +120,12 @@ function updateContext(contextData) {
       url: self.url + '/updateContext',
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-Agent': self.options.userAgent || 'Orion-Client-Library'
       },
       body: contentData,
-      json: true
+      json: true,
+      timeout: options && options.timeout || self.options.timeout
     }, function(error, response, body) {
         if (error) {
           reject(error);
@@ -86,51 +137,38 @@ function updateContext(contextData) {
           });
           return;
         }
-        var responses = body.contextResponses;
-        var statusCode = Array.isArray(responses) &&
-                          responses[0].statusCode.code;
-        if (body.errorCode || statusCode != 200) {
-          reject(body.errorCode || statusCode);
+        var ngsiResponse = NgsiParser.parse(body);
+        if (ngsiResponse.inError) {
+          reject(ngsiResponse.errorCode);
           return;
         }
-
         resolve(contextData);
     });
   });
 }
 
-function queryContext(queryOptions) {
+function queryContext(queryParameters, options) {
   /*jshint validthis:true */
   var self = this;
 
   return new Promise(function(resolve, reject) {
     var apiData = {
-      entities: []
+      entities: [
+        NgsiParser.toNgsiObject(queryParameters)
+      ]
     };
-
-    var entity = Object.create(queryOptions);
-    entity.isPattern = false;
-
-    var keys = Object.keys(queryOptions);
-    keys.forEach(function(aKey) {
-      var mapped = PROPERTY_MAP[aKey];
-
-      if (mapped) {
-        entity[mapped] = queryOptions[aKey];
-      }
-    });
-
-    apiData.entities.push(entity);
 
     Request({
       method: 'POST',
       url: self.url + '/queryContext',
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-Agent': self.options.userAgent || 'Orion-Client-Library'
       },
       body: apiData,
-      json: true
+      json: true,
+      timeout: options && options.timeout || self.options.timeout
     }, function(error, response, body) {
         if (error) {
           reject(error);
@@ -142,34 +180,16 @@ function queryContext(queryOptions) {
           });
           return;
         }
-        var responses = body.contextResponses;
-        var statusCode = Array.isArray(responses) &&
-                          responses[0].statusCode.code;
-        if (body.errorCode || statusCode != 200) {
-          reject(body.errorCode || statusCode);
+
+        var parsed = NgsiParser.parse(body);
+
+        if (parsed.inError) {
+          reject(parsed.errorCode);
           return;
         }
-
-        resolve(toObject(responses[0].contextElement));
+        resolve(parsed);
     });
   });
-}
-
-function toObject(contextElement) {
-  var out = Object.create(null);
-
-  out.type = contextElement.type;
-  out.id = contextElement.id;
-
-  contextElement.attributes.forEach(function(aAttr) {
-    var value = aAttr.value;
-    if (aAttr.type !== 'string') {
-      value = Number(aAttr.value);
-    }
-    out[aAttr.name] = value;
-  });
-
-  return out;
 }
 
 OrionClient.prototype = {
@@ -178,3 +198,4 @@ OrionClient.prototype = {
 };
 
 exports.Client = OrionClient;
+exports.NgsiParser = NgsiParser;
