@@ -1,15 +1,15 @@
 /**
  *
- *  Orion Context Broker Client Library
+ *  FIWARE-sdk: Orion Context Broker Client Library and Utilities
  *
- *  Copyright (c) 2015 Telefónica I+D
- *
- *  You can freely modify and use this software
- *
- * var Orion = require('./orion-lib'),
+ *  var Orion = require('./orion-lib'),
  *     OrionClient = new Orion.Client({
  *        url: ORION_SERVER
  *     });
+ *
+ *  Copyright (c) 2015 Telefónica Investigación y Desarrollo S.A.U.
+ *
+ *  LICENSE: MIT (See LICENSE file)
  *
  */
 
@@ -22,6 +22,11 @@ const PROPERTY_MAP = {
   'id' : 'id'
 };
 
+const EXT_PROPERTY_MAP = {
+  'attributes': 'attributes',
+  'pattern': 'pattern'
+};
+
 const TYPE_MAP = {
   'string': 'string',
   'number': 'float'
@@ -29,6 +34,8 @@ const TYPE_MAP = {
 
 var NgsiParser = {
   parse: function(jsonChunk) {
+    var self = this;
+
     var ngsiData = jsonChunk;
     if (typeof jsonChunk === 'string') {
       ngsiData = JSON.parse(jsonChunk);
@@ -38,13 +45,26 @@ var NgsiParser = {
     var statusCode = Array.isArray(responses) &&
                           responses[0].statusCode.code;
     if (ngsiData.errorCode || statusCode != 200) {
+      if (ngsiData.errorCode && ngsiData.errorCode.code == 404) {
+        return null;
+      }
       return {
         inError: true,
         errorCode: ngsiData.errorCode || statusCode
       };
     }
 
-    return this._toObject(responses[0].contextElement);
+    if (responses.length === 1) {
+      return this._toObject(responses[0].contextElement);
+    }
+    else {
+      var out = [];
+      responses.forEach((aResponse) => {
+        out.push(self._toObject(aResponse.contextElement));
+      });
+
+      return out;
+    }
   },
 
   stringify: function(object) {
@@ -55,21 +75,30 @@ var NgsiParser = {
 
   // Converts an object to a NGSI Object
   toNgsiObject: function(object) {
+    if (!object) {
+      return null;
+    }
+
     var out = {
-      isPattern: false
+      isPattern: object.pattern ? true : false,
+      id: object.pattern
     };
 
     var keys = Object.keys(object);
     keys.forEach(function(aKey) {
       var mapped = PROPERTY_MAP[aKey];
+      var extProperty = EXT_PROPERTY_MAP[aKey];
 
-      if (mapped) {
+      if (mapped && !extProperty) {
         out[mapped] = object[aKey];
         return;
       }
 
-      out.attributes = out.attributes || [];
+      if (extProperty) {
+        return;
+      }
 
+      out.attributes = out.attributes || [];
       out.attributes.push({
         name: aKey,
         value: object[aKey],
@@ -81,6 +110,10 @@ var NgsiParser = {
   },
 
   _toObject: function(contextElement) {
+    if (!contextElement) {
+      return null;
+    }
+
     var out = Object.create(null);
 
     out.type = contextElement.type;
@@ -108,10 +141,15 @@ function updateContext(contextData, options) {
   var self = this;
 
   return new Promise(function(resolve, reject) {
+    var ctxElements = Array.isArray(contextData) ?
+                                                  contextData : [contextData];
+    var ngsiElements = [];
+    ctxElements.forEach(function(aElement) {
+      ngsiElements.push(NgsiParser.toNgsiObject(aElement));
+    });
+
     var contentData = {
-      contextElements: [
-        NgsiParser.toNgsiObject(contextData)
-      ],
+      contextElements: ngsiElements,
       updateAction: 'APPEND'
     };
 
@@ -155,7 +193,8 @@ function queryContext(queryParameters, options) {
     var apiData = {
       entities: [
         NgsiParser.toNgsiObject(queryParameters)
-      ]
+      ],
+      attributes: queryParameters.attributes
     };
 
     Request({
@@ -183,9 +222,12 @@ function queryContext(queryParameters, options) {
 
         var parsed = NgsiParser.parse(body);
 
-        if (parsed.inError) {
+        if (parsed && parsed.inError) {
           reject(parsed.errorCode);
           return;
+        }
+        if (queryParameters.pattern && !parsed) {
+          parsed = [];
         }
         resolve(parsed);
     });

@@ -6,21 +6,16 @@
           {
             "name": "speed",
             "type": "float",
-            "value": "98"
-          },
-          {
-            "name": "rpm",
-            "type": "float",
-            "value": "2000"
+            "value": ""
           }
         ],
         "type": "Car",
         "isPattern": false,
-        "id": "P-9878KLA"
+        "id": "P-9878KL"
       },
       "statusCode": {
-        "code": 200,
-        "reasonPhrase": "OK"
+        "code": 400,
+        "reasonPhrase": "Bad Request"
       }
     }
   ]

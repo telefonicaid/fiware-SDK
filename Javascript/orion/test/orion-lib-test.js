@@ -13,14 +13,19 @@ var assert = require('assert');
 
 var fs = require("fs");
 
-const CAR_ID = 'P-9878KL';
+const CAR_ID = 'P-9878KLA';
 const CAR_TYPE = 'Car';
 
 var contextData = {
   type: CAR_TYPE,
   id: CAR_ID,
-  speed: 98
+  speed: 98,
+  rpm: 2000
 };
+
+function assertEqualObj(obj1, obj2) {
+  assert.equal(JSON.stringify(obj1), JSON.stringify(obj2));
+}
 
 describe('NGSI Parser > ', function() {
 
@@ -29,6 +34,7 @@ describe('NGSI Parser > ', function() {
     assert.equal(obj.id, CAR_ID);
     assert.equal(obj.isPattern, false);
     assert.equal(obj.attributes[0].value, '98');
+    assert.equal(obj.attributes[1].value, '2000');
   }
 
 
@@ -42,7 +48,21 @@ describe('NGSI Parser > ', function() {
     var jsonChunk = fs.readFileSync(__dirname + '/ngsi-response.json', 'UTF-8');
     var object = OrionParser.parse(jsonChunk);
 
-    assert.equal(JSON.stringify(contextData), JSON.stringify(object));
+    if (object.inError) {
+      assert.fail('It cannot be in error');
+      return;
+    }
+
+    assertEqualObj(contextData, object);
+  });
+
+  it('should detect NGSI Responses in error', function() {
+    var jsonChunk = fs.readFileSync(__dirname + '/ngsi-response-error.json',
+                                    'UTF-8');
+    var object = OrionParser.parse(jsonChunk);
+
+    assert.equal(object.inError, true);
+    assert.equal(object.errorCode, 400);
   });
 
   it('should stringify objects to NGSI', function() {
@@ -51,7 +71,7 @@ describe('NGSI Parser > ', function() {
 
     // Here to check that the stringification was ok we convert again to object
     var asObject = JSON.parse(ngsiChunk);
-    assertNgsiObject(asObject.contextElements[0])
+    assertNgsiObject(asObject.contextElements[0]);
   });
 });
 
@@ -62,9 +82,8 @@ describe('Context Operations > ', function() {
 
     it('should update context data', function(done) {
       OrionClient.updateContext(contextData).then(function(updatedData) {
-          assert.equal(JSON.stringify(contextData),
-                       JSON.stringify(updatedData));
-          done();
+        assertEqualObj(contextData, updatedData);
+        done();
       }).catch(function(err) {
           done(err);
       });
@@ -94,11 +113,87 @@ describe('Context Operations > ', function() {
 
     it('should query context data', function(done) {
       OrionClient.queryContext(queryParams).then(function(retrievedData) {
-        assert.equal(JSON.stringify(contextData),
-                       JSON.stringify(retrievedData));
+        assertEqualObj(contextData, retrievedData);
         done();
       }).catch(function(err) {
           done(err);
+      });
+    });
+
+    it('should query context data with attribute restriction', function(done) {
+      queryParams.attributes = ['speed'];
+
+      OrionClient.queryContext(queryParams).then(function(retrievedData) {
+        assert.equal(typeof retrievedData.rpm, 'undefined');
+        done();
+      }).catch(function(err) {
+          done(err);
+      });
+    });
+
+    it('should return null if no element is found', function(done) {
+      var noMatch = {
+        type: CAR_TYPE,
+        id: '123456'
+      };
+
+      OrionClient.queryContext(noMatch).then(function(retrievedData) {
+        assert.equal(retrievedData, null);
+        done();
+      }).catch(function(err) {
+          done(err);
+      });
+    });
+
+    describe('QUERY pattern', function() {
+      var contextData = [
+        {
+          type: 'City',
+          id: 'Spain-Madrid',
+          currentTemperature: 25.6,
+          estimatedTemperature: 28
+        },
+        {
+          type: 'City',
+          id: 'Spain-Valladolid',
+          currentTemperature: 21.8,
+          estimatedTemperature: 23
+        }
+      ];
+
+      before(function(done) {
+        OrionClient.updateContext(contextData).then(() => done(), () => done());
+      });
+
+      var queryParams = {
+        pattern: 'Spain-*',
+        type: 'City'
+      };
+
+      it('should return a collection which matches a pattern', function(done) {
+        OrionClient.queryContext(queryParams).then(function(retrievedData) {
+          assert.equal(retrievedData.length, 2);
+          assertEqualObj(retrievedData[0], contextData[0]);
+          assertEqualObj(retrievedData[1], contextData[1]);
+          done();
+        }).catch(function(error) {
+            done(error);
+        });
+      });
+
+      it('should return an empty collection if no object matches',
+        function(done) {
+          var noMatches = {
+            type: 'City',
+            pattern: 'France-*'
+          };
+
+          OrionClient.queryContext(noMatches).then(function(retrievedData) {
+            assert.equal(retrievedData.length, 0);
+            done();
+          }).catch(function(error) {
+              done(error);
+          });
       });
     });
 
