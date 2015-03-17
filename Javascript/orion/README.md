@@ -28,7 +28,7 @@ var contextData = {
   id: 'P-9873K',
   speed: 98
 };
-var ngsiChunk = OrionHelper.stringify(contextData);
+var ngsiChunk = JSON.stringify(OrionHelper.toNgsi(contextData));
 /* Now update the context by issuing an HTTP Request */
 ```
 

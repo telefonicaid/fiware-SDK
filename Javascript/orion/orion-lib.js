@@ -67,10 +67,17 @@ var NgsiHelper = {
     }
   },
 
-  stringify: function(object) {
-    return JSON.stringify({
-      contextElements: [this.toNgsiObject(object)]
+  toNgsi: function(contextData) {
+    var ctxElements = Array.isArray(contextData) ?
+                                                  contextData : [contextData];
+    var ngsiElements = [];
+    ctxElements.forEach(function(aElement) {
+      ngsiElements.push(NgsiHelper.toNgsiObject(aElement));
     });
+
+    return {
+      contextElements: ngsiElements
+    };
   },
 
   // Converts an object to a NGSI Object
@@ -156,17 +163,10 @@ var NgsiHelper = {
   },
 
   buildUpdate: function(contextData) {
-    var ctxElements = Array.isArray(contextData) ?
-                                                  contextData : [contextData];
-    var ngsiElements = [];
-    ctxElements.forEach(function(aElement) {
-      ngsiElements.push(NgsiHelper.toNgsiObject(aElement));
-    });
+    var request = this.toNgsi(contextData);
+    request.updateAction = 'APPEND';
 
-    return {
-      contextElements: ngsiElements,
-      updateAction: 'APPEND'
-    };
+    return request;
   },
 
   buildQuery: function(queryParameters) {

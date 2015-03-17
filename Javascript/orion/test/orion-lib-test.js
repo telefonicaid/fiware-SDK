@@ -65,13 +65,11 @@ describe('NGSI Helper > ', function() {
     assert.equal(object.errorCode, 400);
   });
 
-  it('should stringify objects to NGSI', function() {
+  it('should convert objects to NGSI', function() {
     var object = contextData;
-    var ngsiChunk = OrionHelper.stringify(object);
+    var ngsiObject = OrionHelper.toNgsi(object);
 
-    // Here to check that the stringification was ok we convert again to object
-    var asObject = JSON.parse(ngsiChunk);
-    assertNgsiObject(asObject.contextElements[0]);
+    assertNgsiObject(ngsiObject.contextElements[0]);
   });
 });
 
