@@ -32,7 +32,7 @@ const TYPE_MAP = {
   'number': 'float'
 };
 
-var NgsiParser = {
+var NgsiHelper = {
   parse: function(jsonChunk) {
     var self = this;
 
@@ -59,7 +59,7 @@ var NgsiParser = {
     }
     else {
       var out = [];
-      responses.forEach((aResponse) => {
+      responses.forEach(function(aResponse) {
         out.push(self._toObject(aResponse.contextElement));
       });
 
@@ -128,7 +128,56 @@ var NgsiParser = {
     });
 
     return out;
+  },
+
+  buildSubscription: function(entity, subscriptionParams) {
+    var subscription = {
+      entities: [
+        this.toNgsiObject(entity)
+      ],
+      attributes: entity.attributes
+    };
+
+    if (entity.attributes) {
+      subscription.notifyConditions = [];
+      entity.attributes.forEach(function(aAttr) {
+        subscription.notifyConditions.push({
+          type: "ONCHANGE",
+          condValues: aAttr
+        });
+      });
+    }
+
+    for(var option in subscriptionParams) {
+      subscription[option] = subscriptionParams[option];
+    }
+
+    return subscription;
+  },
+
+  buildUpdate: function(contextData) {
+    var ctxElements = Array.isArray(contextData) ?
+                                                  contextData : [contextData];
+    var ngsiElements = [];
+    ctxElements.forEach(function(aElement) {
+      ngsiElements.push(NgsiHelper.toNgsiObject(aElement));
+    });
+
+    return {
+      contextElements: ngsiElements,
+      updateAction: 'APPEND'
+    };
+  },
+
+  buildQuery: function(queryParameters) {
+    return {
+      entities: [
+        this.toNgsiObject(queryParameters)
+      ],
+      attributes: queryParameters.attributes
+    };
   }
+
 };
 
 function OrionClient(options) {
@@ -141,17 +190,7 @@ function updateContext(contextData, options) {
   var self = this;
 
   return new Promise(function(resolve, reject) {
-    var ctxElements = Array.isArray(contextData) ?
-                                                  contextData : [contextData];
-    var ngsiElements = [];
-    ctxElements.forEach(function(aElement) {
-      ngsiElements.push(NgsiParser.toNgsiObject(aElement));
-    });
-
-    var contentData = {
-      contextElements: ngsiElements,
-      updateAction: 'APPEND'
-    };
+    var requestData = NgsiHelper.buildUpdate(contextData);
 
     Request({
       method: 'POST',
@@ -161,7 +200,7 @@ function updateContext(contextData, options) {
         'Content-Type': 'application/json',
         'User-Agent': self.options.userAgent || 'Orion-Client-Library'
       },
-      body: contentData,
+      body: requestData,
       json: true,
       timeout: options && options.timeout || self.options.timeout
     }, function(error, response, body) {
@@ -175,7 +214,7 @@ function updateContext(contextData, options) {
           });
           return;
         }
-        var ngsiResponse = NgsiParser.parse(body);
+        var ngsiResponse = NgsiHelper.parse(body);
         if (ngsiResponse.inError) {
           reject(ngsiResponse.errorCode);
           return;
@@ -190,12 +229,7 @@ function queryContext(queryParameters, options) {
   var self = this;
 
   return new Promise(function(resolve, reject) {
-    var apiData = {
-      entities: [
-        NgsiParser.toNgsiObject(queryParameters)
-      ],
-      attributes: queryParameters.attributes
-    };
+    var apiData = NgsiHelper.buildQuery(queryParameters);
 
     Request({
       method: 'POST',
@@ -220,7 +254,7 @@ function queryContext(queryParameters, options) {
           return;
         }
 
-        var parsed = NgsiParser.parse(body);
+        var parsed = NgsiHelper.parse(body);
 
         if (parsed && parsed.inError) {
           reject(parsed.errorCode);
@@ -234,10 +268,51 @@ function queryContext(queryParameters, options) {
   });
 }
 
+function subscribeContext(entity, subscriptionParams, options) {
+  var self = this;
+
+  return new Promise(function(resolve, reject) {
+    var subscription = NgsiHelper.buildSubscription(entity,
+                                                    subscriptionParams);
+
+    Request({
+      method: 'POST',
+      url: self.url + '/subscribeContext',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'User-Agent': self.options.userAgent || 'Orion-Client-Library'
+      },
+      body: subscription,
+      json: true,
+      timeout: options && options.timeout || self.options.timeout
+    }, function(error, response, body) {
+        if (error) {
+          reject(error);
+          return;
+        }
+        if (response.statusCode !== 200) {
+          reject({
+            name: 'HTTPError: ' + response.statusCode
+          });
+          return;
+        }
+
+        if (body.subscribeError) {
+          reject(body.subscribeError.errorCode);
+        }
+        else {
+          resolve(body.subscribeResponse);
+        }
+    });
+  });
+}
+
 OrionClient.prototype = {
   updateContext: updateContext,
-  queryContext: queryContext
+  queryContext: queryContext,
+  subscribeContext: subscribeContext
 };
 
 exports.Client = OrionClient;
-exports.NgsiParser = NgsiParser;
+exports.NgsiHelper = NgsiHelper;

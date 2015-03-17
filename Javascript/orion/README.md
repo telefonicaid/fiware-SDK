@@ -13,10 +13,10 @@ For the sake of flexibility the library provides both a NGSI Parser and a client
 npm install fiware-orion-client
 ````
 
-### NGSI Parser
+### NGSI Helper
 #### Query Context
 ```js
-var OrionParser = require('fiware-orion-client').NgsiParser;
+var OrionHelper = require('fiware-orion-client').NgsiHelper;
 var ngsiChunk = /* Obtain a NGSI Response by querying the Context */
 var obj = OrionParser.parse(ngsiChunk);
 ```
@@ -28,7 +28,7 @@ var contextData = {
   id: 'P-9873K',
   speed: 98
 };
-var ngsiChunk = OrionParser.stringify(contextData);
+var ngsiChunk = OrionHelper.stringify(contextData);
 /* Now update the context by issuing an HTTP Request */
 ```
 
@@ -68,6 +68,24 @@ var queryOptions = {
 }
 OrionClient.queryContext(queryOptions).then(function(contextData) {
   console.log('Context Properly retrieved: ', JSON.stringify(contextData));
+}, function(error) {
+    console.log('Error while querying context: ', error);
+});
+
+````
+
+#### Subscribe Context
+
+```js
+var entity = {
+  type: 'Car',
+  id: 'P-9873K'
+};
+var params = {
+  reference: 'http://localhost/notify'
+};
+OrionClient.subscribeContext(entity, params).then(function(subscription) {
+  console.log('Subscription done: ', JSON.stringify(subscription));
 }, function(error) {
     console.log('Error while querying context: ', error);
 });

@@ -7,7 +7,7 @@ var Orion = require('../orion-lib'),
       url: ORION_SERVER,
       userAgent: 'Test'
     }),
-    OrionParser = Orion.NgsiParser;
+    OrionHelper = Orion.NgsiHelper;
 
 var assert = require('assert');
 
@@ -27,7 +27,7 @@ function assertEqualObj(obj1, obj2) {
   assert.equal(JSON.stringify(obj1), JSON.stringify(obj2));
 }
 
-describe('NGSI Parser > ', function() {
+describe('NGSI Helper > ', function() {
 
   function assertNgsiObject(obj) {
     assert.equal(obj.type, CAR_TYPE);
@@ -39,14 +39,14 @@ describe('NGSI Parser > ', function() {
 
 
   it('should convert JS objects to NGSI Objects', function() {
-    var ngsiObj = OrionParser.toNgsiObject(contextData);
+    var ngsiObj = OrionHelper.toNgsiObject(contextData);
     assertNgsiObject(ngsiObj);
   });
 
 
   it('should parse NGSI Responses', function() {
     var jsonChunk = fs.readFileSync(__dirname + '/ngsi-response.json', 'UTF-8');
-    var object = OrionParser.parse(jsonChunk);
+    var object = OrionHelper.parse(jsonChunk);
 
     if (object.inError) {
       assert.fail('It cannot be in error');
@@ -59,7 +59,7 @@ describe('NGSI Parser > ', function() {
   it('should detect NGSI Responses in error', function() {
     var jsonChunk = fs.readFileSync(__dirname + '/ngsi-response-error.json',
                                     'UTF-8');
-    var object = OrionParser.parse(jsonChunk);
+    var object = OrionHelper.parse(jsonChunk);
 
     assert.equal(object.inError, true);
     assert.equal(object.errorCode, 400);
@@ -67,7 +67,7 @@ describe('NGSI Parser > ', function() {
 
   it('should stringify objects to NGSI', function() {
     var object = contextData;
-    var ngsiChunk = OrionParser.stringify(object);
+    var ngsiChunk = OrionHelper.stringify(object);
 
     // Here to check that the stringification was ok we convert again to object
     var asObject = JSON.parse(ngsiChunk);
@@ -198,5 +198,43 @@ describe('Context Operations > ', function() {
     });
 
   }); // QUERY
+
+  describe('SUBSCRIBE', function() {
+    var entity = {
+      type: CAR_TYPE,
+      id: CAR_ID
+    };
+
+    var subscrParams = {
+      reference: 'http://130.206.83.68/orion/notif_test'
+    };
+
+    it('should subscribe properly to an existent entity', function(done) {
+      OrionClient.subscribeContext(entity, subscrParams).then(
+        function(subscription) {
+          assert.equal(typeof subscription.subscriptionId, 'string');
+          done();
+      }).catch(function(err) {
+          done(err);
+      });
+    });
+
+    it('should subscribe properly to an existent attribute', function(done) {
+      var entityAttr = {
+        type: CAR_TYPE,
+        id: CAR_ID,
+        attributes: ['speed']
+      };
+
+      OrionClient.subscribeContext(entityAttr, subscrParams).then(
+        function(subscription) {
+          assert.equal(typeof subscription.subscriptionId, 'string');
+          done();
+      }).catch(function(err) {
+          done(err);
+      });
+    });
+
+  });  // SUBSCRIBE
 
 });
