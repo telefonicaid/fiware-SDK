@@ -24,7 +24,7 @@ var contextData = {
 };
 
 function assertEqualObj(obj1, obj2) {
-  assert.equal(JSON.stringify(obj1), JSON.stringify(obj2));
+  assert.deepEqual(obj1, obj2);
 }
 
 describe('NGSI Helper > ', function() {
@@ -115,6 +115,29 @@ describe('Context Operations > ', function() {
         done();
       }).catch(function(err) {
           done(err);
+      });
+    });
+
+    it('should query context data with associated metadata', function(done) {
+      var contextData2 = {
+        type: CAR_TYPE,
+        id: '8787GYH',
+        speed: new Orion.Attribute(120, {
+          accuracy: 0.9
+        })
+      };
+
+      OrionClient.updateContext(contextData2).then(function() {
+        return OrionClient.queryContext({
+          type: CAR_TYPE,
+          id: '8787GYH'
+        });
+      }).then(function(retrievedData) {
+          assert.equal(retrievedData.speed.value, 120);
+          assert.equal(retrievedData.speed.metadata.accuracy, 0.9);
+          done();
+      }).catch(function(error) {
+          done(error);
       });
     });
 
