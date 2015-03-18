@@ -89,7 +89,7 @@ describe('Context Operations > ', function() {
 
     it('should reject due to timeout', function(done) {
       OrionClient.updateContext(contextData,{
-        timeout: 5
+        timeout: 1
       }).then(function(updatedData) {
           done('failed!');
       }).catch(function(err) {

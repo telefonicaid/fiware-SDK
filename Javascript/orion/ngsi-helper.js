@@ -5,6 +5,8 @@
  *  var Orion = require('fiware-orion-client'),
  *     OrionHelper = Orion.NgsiHelper;
  *
+ * This library is intended to work both in Web Browsers and Node
+ *
  *  Copyright (c) 2015 Telefónica Investigación y Desarrollo S.A.U.
  *
  *  LICENSE: MIT (See LICENSE file)
@@ -18,15 +20,15 @@ const PROPERTY_MAP = {
     'id' : 'id'
   };
 
-  const EXT_PROPERTY_MAP = {
-    'attributes': 'attributes',
-    'pattern': 'pattern'
-  };
+const EXT_PROPERTY_MAP = {
+  'attributes': 'attributes',
+  'pattern': 'pattern'
+};
 
-  const TYPE_MAP = {
-    'string': 'string',
-    'number': 'float'
-  };
+const TYPE_MAP = {
+  'string': 'string',
+  'number': 'float'
+};
 
 function Attribute(value, metadata) {
   this.value = value;
@@ -43,15 +45,29 @@ var NgsiHelper = {
     }
 
     var responses = ngsiData.contextResponses;
-    var statusCode = Array.isArray(responses) &&
-                          responses[0].statusCode.code;
-    if (ngsiData.errorCode || statusCode != 200) {
-      if (ngsiData.errorCode && ngsiData.errorCode.code == 404) {
+    // In this case the response has not been wrapped around contextReponses
+    if (!responses && !ngsiData.errorCode && !ngsiData.attributes) {
+      responses = [ngsiData];
+    }
+    if (ngsiData.attributes) {
+      responses = [{
+        contextElement: {
+          attributes: ngsiData.attributes
+        }
+      }];
+    }
+
+    var statusCode = (ngsiData.errorCode && ngsiData.errorCode.code) ||
+                      (ngsiData.statusCode && ngsiData.statusCode.code) ||
+                    (Array.isArray(responses) && responses[0].statusCode.code);
+    if (statusCode != 200) {
+      if (statusCode == 404) {
+        console.log('Status Code is 404');
         return null;
       }
       return {
         inError: true,
-        errorCode: ngsiData.errorCode || statusCode
+        errorCode: statusCode
       };
     }
 
@@ -224,9 +240,24 @@ var NgsiHelper = {
       ],
       attributes: queryParameters.attributes
     };
-  }
+  },
 
+  toURL: function(queryParameters) {
+    var out = ['contextEntities'];
+
+    out.push(encodeURIComponent(queryParameters.id));
+
+    if (queryParameters.attributes) {
+      out.push('attributes');
+      out.push(encodeURIComponent(queryParameters.attributes[0]));
+    }
+
+    return out.join('/');
+  }
 };
 
-exports.NgsiHelper = NgsiHelper;
-exports.Attribute = Attribute;
+var theWindow = this.window || null;
+if (!theWindow) {
+  exports.NgsiHelper = NgsiHelper;
+  exports.Attribute = Attribute;
+}

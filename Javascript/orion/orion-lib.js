@@ -15,21 +15,19 @@
 
 'use strict';
 
+var Request = require('request');
+
 var NgsiHelper = require('./ngsi-helper.js').NgsiHelper;
 var Attribute = require('./ngsi-helper.js').Attribute;
 
 var RequestFactory = {
   launch: function(params) {
     return new Promise(function(resolve, reject) {
-      // node.js
       RequestFactory._createNodeRequest(params, resolve, reject);
     });
   },
 
-  // For Node.js
   _createNodeRequest: function(params, resolve, reject) {
-    var Request = require('request');
-
     Request(params, function(error, response, body) {
       if (error) {
         reject(error);

@@ -1,5 +1,5 @@
 {
-  "esnext": true,  
+  "esnext": true,
   "camelcase": false,
   "curly": true,
   "forin": false,
@@ -30,5 +30,7 @@
   "nonstandard": true,
   "worker": true,
 
-  "-W078": true
+  "-W078": true,
+
+  "validthis": true
 }
