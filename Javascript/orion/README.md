@@ -3,9 +3,9 @@ It is not intended to cover all the functionalities offered by the Orion REST AP
 
 The library is aligned with best practices of Javascript development:
 * makes use of Promises
-* it is intended to work both in Web Browsers (to be implemented) and Node environments.
+* it is intended to work both in Web Browsers (only queries) and Node environments.
 
-For the sake of flexibility the library provides both a NGSI Parser and a client library.
+For the sake of flexibility the library provides both a NGSI Helper and a client library.
 
 ### Installation
 
@@ -13,12 +13,31 @@ For the sake of flexibility the library provides both a NGSI Parser and a client
 npm install fiware-orion-client
 ````
 
+or
+
+````
+bower install https://github.com/jmcanterafonseca/FIWARE-sdk/raw/master/Javascript/fiware-orion-client-browser.zip
+````
+
 ### NGSI Helper
-#### Query Context
 ```js
 var OrionHelper = require('fiware-orion-client').NgsiHelper;
+```
+
+```html
+  <script defer src="bower_components/fiware-orion-client/orion.js"></script>
+```
+
+or if you are only going to use the NgsiHelper component
+
+```html
+  <script defer src="bower_components/fiware-orion-client/ngsi-helper.js"></script>
+```
+
+#### Query Context
+```js
 var ngsiChunk = /* Obtain a NGSI Response by querying the Context */
-var obj = OrionParser.parse(ngsiChunk);
+var obj = OrionHelper.parse(ngsiChunk);
 ```
 
 #### Update Context
