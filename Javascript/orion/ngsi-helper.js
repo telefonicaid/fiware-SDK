@@ -62,7 +62,6 @@ var NgsiHelper = {
                     (Array.isArray(responses) && responses[0].statusCode.code);
     if (statusCode != 200) {
       if (statusCode == 404) {
-        console.log('Status Code is 404');
         return null;
       }
       return {

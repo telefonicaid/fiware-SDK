@@ -43,13 +43,23 @@ module.exports = function(grunt) {
         harmony: true
       },
       all: ['orion/test/*.js']
+    },
+
+    compress: {
+      options: {
+        archive: 'fiware-orion-client-browser.zip'
+      },
+      all: {
+        files: [{ expand: true, cwd: 'orion/',
+                src: ['ngsi-helper.js', 'orion.js', 'bower.json'], dest: '/'}]
+      }
     }
   });
 
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-gjslint');
   grunt.loadNpmTasks('grunt-mocha-cli');
-
+  grunt.loadNpmTasks('grunt-contrib-compress');
 
   grunt.registerTask('default', ['fixjsstyle', 'jshint:all', 'gjslint']);
   grunt.registerTask('test', ['mochacli']);

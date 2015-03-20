@@ -1,5 +1,8 @@
 'use strict';
 
+/* global NgsiHelper */
+/* exported OrionClient */
+
 var OrionClient = (function() {
   function loadHelper() {
     if (window.NgsiHelper) {
@@ -73,9 +76,9 @@ var OrionClient = (function() {
           else {
             reject({
               name: 'HTTPError' + req.status
-            })
+            });
           }
-        }
+        };
 
         req.onerror = reject;
       });
@@ -89,7 +92,7 @@ var OrionClient = (function() {
 
   OrionClient.prototype = {
     queryContext: queryContext
-  }
+  };
 
   return OrionClient;
 
