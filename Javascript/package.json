@@ -10,7 +10,7 @@
     "grunt-contrib-jshint": "^0.11.0",
     "grunt-mocha-cli": "^1.12.0",
     "grunt-gjslint": "^0.1.6",
-    "request"
+    "request": "^2.53.0"
   },
   "devDependencies": {
     "mocha": "^2.2.1"
