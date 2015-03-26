@@ -29,6 +29,13 @@ var contextData = {
   rpm: 2000
 };
 
+var contextData2 = {
+  type: CAR_TYPE,
+  id: '8787GYV',
+  speed: 120,
+  rpm: 2500
+};
+
 function assertEqualObj(obj1, obj2) {
   assert.deepEqual(obj1, obj2);
 }
@@ -77,6 +84,7 @@ describe('NGSI Helper > ', function() {
 
     assertNgsiObject(ngsiObject.contextElements[0]);
   });
+
 });
 
 describe('Context Operations > ', function() {
@@ -90,6 +98,18 @@ describe('Context Operations > ', function() {
         done();
       }).catch(function(err) {
           done(err);
+      });
+    });
+
+    it('should update multiple context data', function(done) {
+      var dataList = [
+        contextData,
+        contextData2
+      ];
+      OrionClient.updateContext(dataList).then(function(updatedData) {
+          console.log('Updated ....');
+          assertEqualObj(dataList, updatedData);
+          done();
       });
     });
 
@@ -254,7 +274,7 @@ describe('Context Operations > ', function() {
     };
 
     var subscrParams = {
-      reference: 'http://130.206.83.68/orion/notif_test'
+      callback: 'http://130.206.83.68/orion/notif_test'
     };
 
     it('should subscribe properly to an existent entity', function(done) {
@@ -283,6 +303,117 @@ describe('Context Operations > ', function() {
       });
     });
 
+    it('should subscribe properly by providing a pattern', function(done) {
+      var entityAttr = {
+        type: CAR_TYPE,
+        pattern: '*',
+        attributes: ['speed']
+      };
+
+      OrionClient.subscribeContext(entityAttr, subscrParams).then(
+        function(subscription) {
+          assert.equal(typeof subscription.subscriptionId, 'string');
+          done();
+      }).catch(function(err) {
+          done(err);
+      });
+    });
+
+    it('should subscribe to a list of entities', function(done) {
+      var entities = [{
+          type: CAR_TYPE,
+          id: CAR_ID
+        },
+        {
+          type: CAR_TYPE,
+          id: '8787GV'
+        }
+      ];
+
+      subscrParams.attributes = [
+        'speed',
+        'rpm'
+      ];
+
+      OrionClient.subscribeContext(entities, subscrParams).then(
+        function(subscription) {
+          assert.equal(typeof subscription.subscriptionId, 'string');
+          done();
+      }).catch(function(err) {
+          done(err);
+      });
+    });
+
   });  // SUBSCRIBE
+
+  describe('REGISTER', function() {
+    var entity = {
+      type: CAR_TYPE,
+      id: CAR_ID,
+      attributes: [{
+        name: 'buildYear',
+        type: typeof ''
+      }]
+    };
+    var registrationParams = {
+      callback: 'http://localhost/orion/provider'
+    };
+
+    it('should register a context provider', function(done) {
+      OrionClient.registerContext(entity, registrationParams).then(
+        function(registration) {
+          assert.equal(typeof registration.registrationId, 'string');
+          done();
+      }).catch(function(err) {
+          done(err);
+      });
+    });
+
+    it('should register a context provider. pattern provided', function(done) {
+      var entityDesc = {
+        type: CAR_TYPE,
+        pattern: '*',
+        attributes:  [{
+          name: 'buildYear',
+          type: typeof ''
+        }]
+      };
+
+      OrionClient.registerContext(entityDesc, registrationParams).then(
+        function(registration) {
+          assert.equal(typeof registration.registrationId, 'string');
+          done();
+      }).catch(function(err) {
+          done(err);
+      });
+    });
+
+    it('should register a context provider for various entities',
+      function(done) {
+        // This time the attributes will be passed as registration params
+        registrationParams.attributes =  [{
+          name: 'buildYear',
+          type: typeof ''
+        }];
+        delete entity.attributes;
+
+        var entities = [
+          entity,
+          {
+            type: CAR_TYPE,
+            id: '8787GYV'
+          }
+        ];
+
+        OrionClient.registerContext(entities, registrationParams).then(
+          function(registration) {
+            assert.equal(typeof registration.registrationId, 'string');
+            done();
+        }).catch(function(err) {
+            done(err);
+        });
+    });
+
+  });  // REGISTER
 
 });

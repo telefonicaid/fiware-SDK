@@ -59,6 +59,10 @@ function updateContext(contextData, options) {
   /*jshint validthis:true */
   var self = this;
 
+  if (!contextData) {
+    return Promise.resolve();
+  }
+
   return new Promise(function(resolve, reject) {
     var headers = {
       'Accept': 'application/json',
@@ -89,6 +93,10 @@ function updateContext(contextData, options) {
 function queryContext(queryParameters, options) {
   /*jshint validthis:true */
   var self = this;
+
+  if (!queryParameters) {
+    return Promise.resolve(null);
+  }
 
   return new Promise(function(resolve, reject) {
     var headers = {
@@ -146,11 +154,51 @@ function subscribeContext(entity, subscriptionParams, options) {
       json: true,
       timeout: options && options.timeout || self.options.timeout
     }).then(function(body) {
-        if (body.subscribeError) {
-          reject(body.subscribeError.errorCode);
+        if (body.subscribeError || body.orionError) {
+          var errorCode = (body.subscribeError &&
+                            body.subscribeError.errorCode) ||
+                          (body.orionError && body.orionError.code);
+          reject(errorCode);
         }
         else {
           resolve(body.subscribeResponse);
+        }
+    }, reject);
+  });
+}
+
+function registerContext(entity, registrationParams, options) {
+  /*jshint validthis:true */
+  var self = this;
+
+  if (!registrationParams || (!registrationParams.providingApplication &&
+        !registrationParams.callback)) {
+    return Promise.reject('No provider provided');
+  }
+
+  return new Promise(function(resolve, reject) {
+    var registration = NgsiHelper.buildRegistration(entity, registrationParams);
+
+     post({
+      url: self.url + '/registry/registerContext',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'User-Agent': self.options.userAgent || 'Orion-Client-Library'
+      },
+      body: registration,
+      json: true,
+      timeout: options && options.timeout || self.options.timeout
+    }).then(function(body) {
+        if (body.registerError || body.orionError || body.errorCode) {
+          var errorCode = (body.errorCode && body.errorCode.code) ||
+                          (body.registerError &&
+                           body.registerError.errorCode) ||
+                          (body.orionError && body.orionError.code);
+          reject(errorCode);
+        }
+        else {
+          resolve(body);
         }
     }, reject);
   });
@@ -177,7 +225,8 @@ function extractServicePath(params, options) {
 OrionClient.prototype = {
   updateContext: updateContext,
   queryContext: queryContext,
-  subscribeContext: subscribeContext
+  subscribeContext: subscribeContext,
+  registerContext: registerContext
 };
 
 exports.Client = OrionClient;

@@ -201,28 +201,104 @@ var NgsiHelper = {
   },
 
   buildSubscription: function(entity, subscriptionParams) {
+    var entities = Array.isArray(entity) ? entity : [entity];
+
     var subscription = {
-      entities: [
-        this.toNgsiObject(entity)
-      ],
-      attributes: entity.attributes
+      entities: [],
+      attributes: []
     };
 
-    if (entity.attributes) {
-      subscription.notifyConditions = [];
-      entity.attributes.forEach(function(aAttr) {
+    var entityList = subscription.entities;
+    var attrList = subscription.attributes;
+
+    entities.forEach(function(aEntity) {
+      if (Array.isArray(aEntity.attributes)) {
+        subscription.notifyConditions = [];
+
+        aEntity.attributes.forEach(function(aAttr) {
+          subscription.notifyConditions.push({
+            type: 'ONCHANGE',
+            condValues: aAttr
+          });
+          attrList.push(aAttr);
+        });
+      }
+
+      delete aEntity.attributes;
+      entityList.push(NgsiHelper.toNgsiObject(aEntity));
+    });
+
+    if (Array.isArray(subscriptionParams.attributes)) {
+      subscription.notifyConditions = subscription.notifyConditions || [];
+
+      subscriptionParams.attributes.forEach(function(aAttr) {
         subscription.notifyConditions.push({
           type: 'ONCHANGE',
           condValues: aAttr
         });
+        attrList.push(aAttr);
       });
     }
 
     for (var option in subscriptionParams) {
+      if (option === 'attributes') {
+        continue;
+      }
+
+      if (option === 'callback') {
+        subscription.reference = subscriptionParams.callback;
+        continue;
+      }
       subscription[option] = subscriptionParams[option];
     }
 
     return subscription;
+  },
+
+  buildRegistration: function(entity, registrationParams) {
+    var entities = Array.isArray(entity) ? entity : [entity];
+
+    var registration = {
+      contextRegistrations: []
+    };
+
+    entities.forEach(function(aEntity) {
+      var aRegistration = {
+        entities: [],
+        attributes: [],
+        providingApplication: aEntity.callback || registrationParams.callback
+      };
+      var entityList = aRegistration.entities;
+      var attrList = aRegistration.attributes;
+
+      if (Array.isArray(aEntity.attributes)) {
+        aEntity.attributes.forEach(function(aAttr) {
+          aAttr.isDomain = false;
+          attrList.push(aAttr);
+        })
+        delete aEntity.attributes;
+      }
+      entityList.push(NgsiHelper.toNgsiObject(aEntity));
+      registration.contextRegistrations.push(aRegistration);
+      
+      // We are not checking for attribute duplicity
+      if (Array.isArray(registrationParams.attributes)) {
+        registrationParams.attributes.forEach(function(aAttr) {
+          aAttr.isDomain = false;
+          attrList.push(aAttr);
+        });
+      }
+    });
+
+    for (var option in registrationParams) {
+      if (option === 'providingApplication' || option === 'attributes' ||
+          option === 'callback') {
+        continue;
+      }
+      registration[option] = registrationParams[option];
+    }
+
+    return registration;
   },
 
   buildUpdate: function(contextData) {
