@@ -273,8 +273,7 @@ var NgsiHelper = {
 
       if (Array.isArray(aEntity.attributes)) {
         aEntity.attributes.forEach(function(aAttr) {
-          aAttr.isDomain = false;
-          attrList.push(aAttr);
+          attrList.push(NgsiHelper._toAttr(aAttr));
         })
         delete aEntity.attributes;
       }
@@ -284,8 +283,7 @@ var NgsiHelper = {
       // We are not checking for attribute duplicity
       if (Array.isArray(registrationParams.attributes)) {
         registrationParams.attributes.forEach(function(aAttr) {
-          aAttr.isDomain = false;
-          attrList.push(aAttr);
+          attrList.push(NgsiHelper._toAttr(aAttr));
         });
       }
     });
@@ -299,6 +297,19 @@ var NgsiHelper = {
     }
 
     return registration;
+  },
+
+  _toAttr: function(attrData) {
+    if (typeof attrData === 'string') {
+      return {
+        name: attrData,
+        type: 'string',
+        isDomain: false
+      }
+    }
+    
+    attrData.isDomain = false;
+    return attrData;
   },
 
   buildUpdate: function(contextData) {

@@ -369,6 +369,25 @@ describe('Context Operations > ', function() {
       });
     });
 
+    it('should register a context provider. simplified attribute naming',
+       function(done) {
+        var registration = {
+          type: CAR_TYPE,
+          id: 'M-45678',
+          attributes: [
+            'byDefaultString'
+          ]
+        };
+        
+        OrionClient.registerContext(entity, registrationParams).then(
+          function(registration) {
+            assert.equal(typeof registration.registrationId, 'string');
+            done();
+          }).catch(function(err) {
+            done(err);
+          });
+    });
+
     it('should register a context provider. pattern provided', function(done) {
       var entityDesc = {
         type: CAR_TYPE,
