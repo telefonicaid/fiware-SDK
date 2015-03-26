@@ -95,7 +95,7 @@ OrionClient.queryContext(queryOptions).then(function(contextData) {
 
 ````
 
-#### Subscribe Context
+#### Subscribe to Context
 
 ```js
 var entity = {
@@ -103,12 +103,35 @@ var entity = {
   id: 'P-9873K'
 };
 var params = {
-  reference: 'http://localhost/notify'
+  callback: 'http://localhost/notify'
 };
 OrionClient.subscribeContext(entity, params).then(function(subscription) {
   console.log('Subscription done: ', JSON.stringify(subscription));
 }, function(error) {
-    console.log('Error while querying context: ', error);
+    console.log('Error while subscribing context: ', error);
+});
+````
+
+#### Register Context Provider
+
+```js
+var entity = {
+  type: 'Car',
+  pattern: '*',
+  attributes: [{
+    name: 'buildYear',
+    type: typeof ''
+  }]
+};
+var params = {
+  callback: 'http://localhost/get_data'
+}
+
+OrionClient.registerContext(entity, params).then(function(registration) {
+  console.log('Registration done: ', JSON.stringify(registration));
+  }, function(error) {
+    console.log('Error while registering context: ', error);
+  });
 });
 
 ````
