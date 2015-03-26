@@ -1,3 +1,5 @@
+[![npm badge](https://nodei.co/npm/fiware-orion-client.png?downloads=true)](https://www.npmjs.com/package/fiware-orion-client)
+
 This library is **under development** and it is aimed at making it easier for Javascript developers to manage context information.
 It is not intended to cover all the functionalities offered by the Orion REST API and you might need to use the latter in certain cases.
 
