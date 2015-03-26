@@ -15,6 +15,12 @@ var fs = require("fs");
 
 const CAR_ID = 'P-9878KLA';
 const CAR_TYPE = 'Car';
+const PARK_TYPE = 'Park';
+
+const VALLADOLID = '/Spain/Valladolid';
+const PARKS = 'PublicParks';
+const PARK_SERVICE_PATH = VALLADOLID + '/' + PARKS;
+const PARK_ID = 'CampoGrande';
 
 var contextData = {
   type: CAR_TYPE,
@@ -82,6 +88,27 @@ describe('Context Operations > ', function() {
       OrionClient.updateContext(contextData).then(function(updatedData) {
         assertEqualObj(contextData, updatedData);
         done();
+      }).catch(function(err) {
+          done(err);
+      });
+    });
+
+    it('should update context with entity paths', function(done) {
+      var data = {
+        id: PARK_SERVICE_PATH + '/' + PARK_ID,
+        type: PARK_TYPE,
+        extension: 2000
+      };
+      OrionClient.updateContext(data).then(function(updatedData) {
+
+        return OrionClient.queryContext({
+          type: 'Park',
+          id: PARK_ID
+        }, { path: VALLADOLID + '/#' });
+
+      }).then(function(queryResult) {
+          assert.equal(queryResult.extension, 2000);
+          done();
       }).catch(function(err) {
           done(err);
       });

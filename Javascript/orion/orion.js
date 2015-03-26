@@ -65,10 +65,10 @@ var OrionClient = (function() {
             if (queryParams.pattern && !parsed) {
               parsed = [];
             }
-            if (!parsed.id) {
+            if (parsed && !parsed.id) {
               parsed.id = queryParams.id;
             }
-            if (!parsed.type) {
+            if (parsed && !parsed.type) {
               parsed.type = queryParams.type;
             }
             resolve(parsed);

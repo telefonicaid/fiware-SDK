@@ -60,15 +60,25 @@ function updateContext(contextData, options) {
   var self = this;
 
   return new Promise(function(resolve, reject) {
+    var headers = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'User-Agent': self.options.userAgent || 'Orion-Client-Library'
+    };
+    
+    var params = extractServicePath(contextData, options);
+    if (params.id) {
+      contextData.id = params.id;
+    }
+    if (params.servicePath) {
+      headers['Fiware-ServicePath'] = params.servicePath;
+    }
+
     var requestData = NgsiHelper.buildUpdate(contextData);
 
     post({
       url: self.url + '/updateContext',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'User-Agent': self.options.userAgent || 'Orion-Client-Library'
-      },
+      headers: headers,
       body: requestData,
       json: true,
       timeout: options && options.timeout || self.options.timeout
@@ -81,15 +91,25 @@ function queryContext(queryParameters, options) {
   var self = this;
 
   return new Promise(function(resolve, reject) {
+    var headers = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'User-Agent': self.options.userAgent || 'Orion-Client-Library'
+    };
+
+    var params = extractServicePath(queryParameters, options);
+    if (params.id) {
+      queryParameters.id = params.id;
+    }
+    if (params.servicePath) {
+      headers['Fiware-ServicePath'] = params.servicePath;
+    }
+
     var apiData = NgsiHelper.buildQuery(queryParameters);
 
     post({
       url: self.url + '/queryContext',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'User-Agent': self.options.userAgent || 'Orion-Client-Library'
-      },
+      headers: headers,
       body: apiData,
       json: true,
       timeout: options && options.timeout || self.options.timeout
@@ -134,6 +154,24 @@ function subscribeContext(entity, subscriptionParams, options) {
         }
     }, reject);
   });
+}
+
+function extractServicePath(params, options) {
+  var id = params && params.id;
+  var path = options && options.path;
+
+  var out = {
+    id: id,
+    servicePath: path
+  };
+
+  if (id && id.startsWith('/')) {
+    var lastSlash = id.lastIndexOf('/');
+    out.servicePath = id.substring(0, lastSlash);
+    out.id = id.substring(lastSlash + 1);
+  }
+
+  return out;
 }
 
 OrionClient.prototype = {
