@@ -25,11 +25,6 @@ const EXT_PROPERTY_MAP = {
   'pattern': 'pattern'
 };
 
-const TYPE_MAP = {
-  'string': 'string',
-  'number': 'float'
-};
-
 function Attribute(value, metadata) {
   this.value = value;
   this.metadata = metadata;
@@ -124,10 +119,11 @@ var NgsiHelper = {
       }
 
       out.attributes = out.attributes || [];
+      var value = self._getAttrValue(object[aKey]);
       var attributeData = {
         name: aKey,
-        value: self._getAttrValue(object[aKey]),
-        type: TYPE_MAP[typeof object[aKey]]
+        value: value,
+        type: self._typeOf(value)
       };
 
       // Now dealing with metadata (if present)
@@ -139,7 +135,7 @@ var NgsiHelper = {
            attributeData.metadatas.push({
             name: p,
             value: metaValue,
-            type: TYPE_MAP[metaValue]
+            type: self._typeOf(metaValue)
           });
         }
       }
@@ -158,14 +154,36 @@ var NgsiHelper = {
   },
 
   _toValue: function(ngsiAttr) {
-    return ngsiAttr.type !== 'string' && ngsiAttr.type !== 'object' ?
-                    Number(ngsiAttr.value) : ngsiAttr.value;
+    var out = ngsiAttr.value;
+    if (ngsiAttr.type === 'number') {
+      out = Number(out);
+    }
+    else if (ngsiAttr.type === 'date') {
+      out = new Date(out);
+    }
+    return out;
+  },
+
+  _typeOf: function(value) {
+    var out = typeof value;
+
+    if (out === 'object') {
+      if (typeof value.getDate === 'function') {
+        out = 'date';
+      }
+    }
+
+    return out;
   },
 
   _attrList2Obj: function(attrList) {
     var self = this;
 
     var out = Object.create(null);
+
+    if (!attrList) {
+      return out;
+    }
 
     if (Array.isArray(attrList)) {
       attrList.forEach(function(aAttr) {
@@ -326,6 +344,45 @@ var NgsiHelper = {
       ],
       attributes: queryParameters.attributes
     };
+  },
+
+  buildNgsiResponse: function(data) {
+    var dataAsNgsi = NgsiHelper.toNgsiObject(data);
+
+    var out = {
+      contextResponses: [],
+    };
+
+    out.contextResponses[0] = {
+      contextElement: dataAsNgsi,
+      statusCode: {
+        code: 200,
+        reasonPhrase: 'OK'
+      }
+    };
+    
+    return out;
+  },
+
+  parseNgsiRequest: function(chunk) {
+    var out = {
+      entities: []
+    };
+
+    var parsedChunk = chunk;
+    if (typeof chunk === 'string') {
+      parsedChunk = JSON.parse(chunk);
+    }
+
+    var entities = parsedChunk.entities;
+    entities.forEach(function(aEntity) {
+      var obj = NgsiHelper._toObject(aEntity);
+      out.entities.push(obj);
+    });
+
+    out.attributes = parsedChunk.attributes;
+
+    return out;
   },
 
   toURL: function(queryParameters) {

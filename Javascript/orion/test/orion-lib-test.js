@@ -85,6 +85,13 @@ describe('NGSI Helper > ', function() {
     assertNgsiObject(ngsiObject.contextElements[0]);
   });
 
+  it('should build NGSI Responses', function() {
+    var object = contextData;
+    var ngsiResponse = OrionHelper.buildNgsiResponse(object);
+
+     assertNgsiObject(ngsiResponse.contextResponses[0].contextElement);
+     assert.equal(ngsiResponse.contextResponses[0].statusCode.code, 200);
+  });
 });
 
 describe('Context Operations > ', function() {
@@ -182,6 +189,31 @@ describe('Context Operations > ', function() {
       }).then(function(retrievedData) {
           assert.equal(retrievedData.speed.value, 120);
           assert.equal(retrievedData.speed.metadata.accuracy, 0.9);
+          done();
+      }).catch(function(error) {
+          done(error);
+      });
+    });
+
+    it('should query context data with date as metadata', function(done) {
+      var date = new Date();
+      var contextData3 = {
+        type: CAR_TYPE,
+        id: '9999GYH',
+        speed: new Orion.Attribute(150, {
+          timestamp: date
+        })
+      };
+
+      OrionClient.updateContext(contextData3).then(function() {
+        return OrionClient.queryContext({
+          type: CAR_TYPE,
+          id: '9999GYH'
+        });
+      }).then(function(retrievedData) {
+          assert.equal(retrievedData.speed.value, 150);
+          assert.equal(retrievedData.speed.metadata.timestamp.getTime(),
+                       date.getTime());
           done();
       }).catch(function(error) {
           done(error);
