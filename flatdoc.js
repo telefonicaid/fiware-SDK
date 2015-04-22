@@ -182,6 +182,7 @@
   };
 
   Parser.setMarkedOptions = function(highlight) {
+    /*
     marked.setOptions({
       highlight: function(code, lang) {
         if (lang) {
@@ -189,7 +190,7 @@
         }
         return code;
       }
-    });
+    });*/
   };
 
   /**
