@@ -222,7 +222,7 @@
   Transformer.prettify = function($content) {
     $content.find('pre').each(function() {
       var $el = $(this);
-      console.log($el);
+      $el.addClass('prettyprint');
     });
   }
 
