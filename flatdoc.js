@@ -479,7 +479,8 @@
         var el = document.getElementById(id);
         if (el) el.scrollIntoView(true);
       }
-      $(doc.root).trigger('flatdoc:ready');
+      var customEvent = new CustomEvent('flatdoc:ready');
+      document.dispatchEvent(customEvent);
     });
   };
 
