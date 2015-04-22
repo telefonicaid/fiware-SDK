@@ -367,6 +367,8 @@
       .replace(/(\d+)/gm, '<span class="number">$1</span>');
   };
 
+  Highlighters = {};
+
   /**
    * Menu view. Renders menus
    */
