@@ -31,6 +31,14 @@
   <link href='https://cdn.rawgit.com/rstacruz/flatdoc/v0.9.0/theme-white/style.css' rel='stylesheet'>
   <script src='https://cdn.rawgit.com/rstacruz/flatdoc/v0.9.0/theme-white/script.js'></script>
 
+  <script type="text/javascript" src="google-code-prettify/prettify.js"></script>
+  <link rel="stylesheet" href="monokai/prettify.css">
+  <link rel="stylesheet" href="google-code-prettify/prettify.css">
+
+  <script>
+    window.addEventListener('flatdoc:ready', prettyPrint);
+  </script>
+
   <!-- Meta -->
   <meta content="FIWARE-sdk" property="og:title">
   <meta content="Tools and libraries for FIWARE" name="description">
@@ -77,11 +85,5 @@
     <div role='flatdoc-content' class='content'></div>
   </div>
 
-  <script type="text/javascript" src="google-code-prettify/prettify.js"></script>
-  <link rel="stylesheet" href="monokai/prettify.css">
-  <link rel="stylesheet" href="google-code-prettify/prettify.css">
-  <script>
-    window.addEventListener('flatdoc:ready', prettyPrint);
-  </script>
 </body>
 </html>
