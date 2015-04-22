@@ -66,12 +66,6 @@ code .dec {
 pre.prettyprint,
 code.prettyprint {
   background-color: #272822;
-  -moz-border-radius: 8px;
-  -webkit-border-radius: 8px;
-  -o-border-radius: 8px;
-  -ms-border-radius: 8px;
-  -khtml-border-radius: 8px;
-  border-radius: 8px;
 }
 pre.prettyprint {
   width: 100%;
