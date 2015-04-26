@@ -29,6 +29,36 @@ var contextData = {
   rpm: 2000
 };
 
+var contextDataAsXML =
+  '<contextElement>' +
+    '<entityId type="Car" isPattern="false">' +
+      '<id>P-9878KLA</id>' +
+    '</entityId>' +
+    '<contextAttributeList>' +
+      '<contextAttribute>' +
+        '<name>speed</name>' +
+        '<type>number</type>' +
+        '<contextValue>98</contextValue>' +
+      '</contextAttribute>' +
+      '<contextAttribute>' +
+        '<name>rpm</name>' +
+        '<type>number</type>' +
+        '<contextValue>2000</contextValue>' +
+      '</contextAttribute>' +
+    '</contextAttributeList>' +
+  '</contextElement>';
+
+var contextResponseAsXML =
+  '<contextResponseList>' +
+    '<contextElementResponse>' + contextDataAsXML +
+      '<statusCode>' +
+        '<code>200</code>' +
+        '<reasonPhrase>OK</reasonPhrase>' +
+      '</statusCode>' +
+    '</contextElementResponse>' +
+  '</contextResponseList>';
+
+
 var contextData2 = {
   type: CAR_TYPE,
   id: '8787GYV',
@@ -56,6 +86,10 @@ describe('NGSI Helper > ', function() {
     assertNgsiObject(ngsiObj);
   });
 
+  it('should convert NGSI Objects to XML', function() {
+    var objAsNgsiXML = OrionHelper.toNgsiObject(contextData).toXML();
+    assert.equal(objAsNgsiXML, contextDataAsXML);
+  });
 
   it('should parse NGSI Responses', function() {
     var jsonChunk = fs.readFileSync(__dirname + '/ngsi-response.json', 'UTF-8');
@@ -92,6 +126,13 @@ describe('NGSI Helper > ', function() {
      assertNgsiObject(ngsiResponse.contextResponses[0].contextElement);
      assert.equal(ngsiResponse.contextResponses[0].statusCode.code, 200);
   });
+
+  it('should build NGSI Responses as XML', function() {
+    var object = contextData;
+    var ngsiResponse = OrionHelper.buildNgsiResponse(object).toXML();
+
+    assert.equal(ngsiResponse, contextResponseAsXML);
+  })
 });
 
 describe('Context Operations > ', function() {
@@ -114,9 +155,8 @@ describe('Context Operations > ', function() {
         contextData2
       ];
       OrionClient.updateContext(dataList).then(function(updatedData) {
-          console.log('Updated ....');
-          assertEqualObj(dataList, updatedData);
-          done();
+        assertEqualObj(dataList, updatedData);
+        done();
       });
     });
 
@@ -151,6 +191,41 @@ describe('Context Operations > ', function() {
       });
     });
 
+    it('should be rejected if a non existing entity is updated',
+      function(done) {
+        OrionClient.updateContext({
+          type: 'test',
+          id: 'not-exists2',
+          speed: 100
+        }, { updateAction: 'UPDATE' }).then(function() {
+            done('failed!');
+        }, function(err) {
+            done();
+        });
+    });
+
+    it('should delete context entities', function(done) {
+      var deleteData = {
+        type: 'test',
+        id: 'test-1',
+        testAttr: 'testVal'
+      };
+      var deleteQuery = {
+        type: 'test',
+        id: 'test-1'
+      };
+
+      OrionClient.updateContext(deleteData).then(function(updatedData) {
+        return OrionClient.deleteContext(deleteQuery);
+      }).then(function() {
+          return OrionClient.queryContext(deleteQuery);
+      }).then(function(queryResult) {
+          assert.equal(queryResult, null);
+          done();
+      }).catch(function(err) {
+          done(err);
+      });
+    });
   }); // UPDATE
 
   describe('QUERY', function() {
@@ -466,5 +541,4 @@ describe('Context Operations > ', function() {
     });
 
   });  // REGISTER
-
 });

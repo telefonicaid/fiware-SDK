@@ -15,10 +15,12 @@
 
 'use strict';
 
+var XmlBuilder = require('./xml-builder.js');
+
 const PROPERTY_MAP = {
-    'type': 'type',
-    'id' : 'id'
-  };
+  'type': 'type',
+  'id' : 'id'
+};
 
 const EXT_PROPERTY_MAP = {
   'attributes': 'attributes',
@@ -28,6 +30,52 @@ const EXT_PROPERTY_MAP = {
 function Attribute(value, metadata) {
   this.value = value;
   this.metadata = metadata;
+}
+
+// Converts a NGSI object to XML
+function ngsiObj2XML() {
+  return ngsiObj2XMLTree.bind(this)().build();
+}
+
+function ngsiObj2XMLTree() {
+  var root = new XmlBuilder('contextElement');
+  var entityId = root.child('entityId').attr('type', this.type);
+  
+  entityId.attr('isPattern', this.isPattern);
+  entityId.child('id').text(this.id);
+
+  var attrList = root.child('contextAttributeList');
+  this.attributes.forEach(function(aAttr) {
+    var attrNode = attrList.child('contextAttribute');
+    attrNode.child('name').text(aAttr.name);
+    if (aAttr.type) {
+      attrNode.child('type').text(aAttr.type);
+    }
+    attrNode.child('contextValue').text(aAttr.value);
+  });
+
+  return root;
+}
+
+// Converts a NGSI Response to XML
+function ngsiResponse2XMLTree() {
+  var root = new XmlBuilder('contextResponseList');
+
+  this.contextResponses.forEach(function(aResponse) {
+    var responseElement = root.child('contextElementResponse');
+
+    responseElement.child(aResponse.contextElement.toXMLTree());
+
+    var statusCode = responseElement.child('statusCode');
+    statusCode.child('code').text(aResponse.statusCode.code);
+    statusCode.child('reasonPhrase').text(aResponse.statusCode.reasonPhrase);
+  });
+
+  return root;
+}
+
+function ngsiResponse2XML() {
+  return ngsiResponse2XMLTree.bind(this)().build();
 }
 
 var NgsiHelper = {
@@ -141,6 +189,9 @@ var NgsiHelper = {
       }
       out.attributes.push(attributeData);
     });
+
+    out.toXMLTree = ngsiObj2XMLTree;
+    out.toXML = ngsiObj2XML;
 
     return out;
   },
@@ -330,9 +381,9 @@ var NgsiHelper = {
     return attrData;
   },
 
-  buildUpdate: function(contextData) {
+  buildUpdate: function(contextData, action) {
     var request = this.toNgsi(contextData);
-    request.updateAction = 'APPEND';
+    request.updateAction = action;
 
     return request;
   },
@@ -361,6 +412,9 @@ var NgsiHelper = {
       }
     };
     
+    out.toXMLTree = ngsiResponse2XMLTree;
+    out.toXML = ngsiResponse2XML;
+
     return out;
   },
 
@@ -403,4 +457,5 @@ var theWindow = this.window || null;
 if (!theWindow) {
   exports.NgsiHelper = NgsiHelper;
   exports.Attribute = Attribute;
+  exports.XmlBuilder = XmlBuilder;
 }

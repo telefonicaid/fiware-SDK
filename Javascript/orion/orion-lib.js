@@ -19,6 +19,7 @@ var Request = require('request');
 
 var NgsiHelper = require('./ngsi-helper.js').NgsiHelper;
 var Attribute = require('./ngsi-helper.js').Attribute;
+var XmlBuilder = require('./ngsi-helper.js').XmlBuilder;
 
 var RequestFactory = {
   launch: function(params) {
@@ -78,7 +79,8 @@ function updateContext(contextData, options) {
       headers['Fiware-ServicePath'] = params.servicePath;
     }
 
-    var requestData = NgsiHelper.buildUpdate(contextData);
+    var requestData = NgsiHelper.buildUpdate(contextData,
+                                  options && options.updateAction || 'APPEND');
 
     post({
       url: self.url + '/updateContext',
@@ -86,8 +88,26 @@ function updateContext(contextData, options) {
       body: requestData,
       json: true,
       timeout: options && options.timeout || self.options.timeout
-    }).then(resolve.bind(null, contextData), reject);
+    }).then(function(body) {
+        var parsed = NgsiHelper.parse(body);
+        if (!parsed) {
+          reject(404);
+        }
+
+        if (parsed && parsed.inError) {
+          reject(parsed.errorCode);
+          return;
+        }
+
+        resolve(contextData);
+    }, reject);
   });
+}
+
+function deleteContext(contextData, options) {
+  var theOptions = options || Object.create(null);
+  theOptions.updateAction = 'DELETE';
+  return this.updateContext(contextData, theOptions);
 }
 
 function queryContext(queryParameters, options) {
@@ -225,6 +245,7 @@ function extractServicePath(params, options) {
 OrionClient.prototype = {
   updateContext: updateContext,
   queryContext: queryContext,
+  deleteContext: deleteContext,
   subscribeContext: subscribeContext,
   registerContext: registerContext
 };
@@ -232,3 +253,4 @@ OrionClient.prototype = {
 exports.Client = OrionClient;
 exports.NgsiHelper = NgsiHelper;
 exports.Attribute = Attribute;
+exports.XmlBuilder = XmlBuilder;
