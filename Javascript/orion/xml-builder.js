@@ -58,7 +58,6 @@ Element.prototype = {
 
   build: function() {
     var out = '<';
-    console.log('Typeof: ', typeof this.eleName, this.eleName);
     out += this.eleName;
 
     out += serializeAttrs(this.attrs);

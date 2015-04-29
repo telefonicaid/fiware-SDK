@@ -58,6 +58,22 @@ var contextResponseAsXML =
     '</contextElementResponse>' +
   '</contextResponseList>';
 
+var requestAsXML =
+  '<queryContextRequest>' +
+    '<entityIdList>' +
+      '<entityId type="Street" isPattern="false">' +
+        '<id>Street4</id>' +
+      '</entityId>' +
+      '<entityId type="Street" isPattern="false">' +
+        '<id>Street6</id>' +
+      '</entityId>' +
+    '</entityIdList>' +
+    '<attributeList>' +
+      '<attribute>temperature</attribute>' +
+      '<attribute>humidity</attribute>' +
+    '</attributeList>' +
+  '</queryContextRequest>';
+
 
 var contextData2 = {
   type: CAR_TYPE,
@@ -101,6 +117,31 @@ describe('NGSI Helper > ', function() {
     }
 
     assertEqualObj(contextData, object);
+  });
+
+  it('should parse NGSI Responses in XML', function() {
+    var xmlChunk = fs.readFileSync(__dirname + '/ngsi-response.xml', 'UTF-8');
+    var object = OrionHelper.parse(xmlChunk);
+
+    if (object.inError) {
+      assert.fail('It cannot be in error');
+      return;
+    }
+
+    assertEqualObj(contextData, object);
+  });
+
+  it('should parse providing requests in XML', function() {
+    var out = OrionHelper.parseNgsiRequest(requestAsXML);
+    
+    assert.equal(out.entities.length, 2);
+    assert.equal(out.attributes.length, 2);
+
+    assert.equal(out.entities[0].id, 'Street4');
+    assert.equal(out.attributes[0], 'temperature');
+
+    assert.equal(out.entities[1].type, 'Street');
+    assert.ok(typeof out.entities[1].pattern === 'undefined');
   });
 
   it('should detect NGSI Responses in error', function() {

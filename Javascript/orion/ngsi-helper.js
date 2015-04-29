@@ -78,13 +78,20 @@ function ngsiResponse2XML() {
   return ngsiResponse2XMLTree.bind(this)().build();
 }
 
+
 var NgsiHelper = {
-  parse: function(jsonChunk) {
+  parse: function(chunk) {
     var self = this;
 
-    var ngsiData = jsonChunk;
-    if (typeof jsonChunk === 'string') {
-      ngsiData = JSON.parse(jsonChunk);
+    var ngsiData = chunk;
+    if (typeof chunk === 'string') {
+      try {
+        ngsiData = JSON.parse(chunk);
+      }
+      catch(e) {
+        // If cannot be parsed as JSON then should XML
+        return this._parseXML(chunk);
+      }
     }
 
     var responses = ngsiData.contextResponses;
@@ -425,7 +432,12 @@ var NgsiHelper = {
 
     var parsedChunk = chunk;
     if (typeof chunk === 'string') {
-      parsedChunk = JSON.parse(chunk);
+      try {
+        parsedChunk = JSON.parse(chunk);
+      }
+      catch(e) {
+        return this._parseNgsiRequestXML(chunk);
+      }
     }
 
     var entities = parsedChunk.entities;
@@ -450,6 +462,144 @@ var NgsiHelper = {
     }
 
     return out.join('/');
+  },
+
+  _parseNgsiRequestXML: function(chunk) {
+    var out = {
+      entities: [],
+      attributes: []
+    };
+
+    var regExp1 = /<entityId type=\"(\w+)\"\s+isPattern=\"(\w+)\">/g;
+    var regExp2 = /<id>(\S+)<\/id>/g;
+    var regExp3 = /<attribute>(\w+)<\/attribute>/g;
+
+    var match1 = regExp1.exec(chunk);
+    while (match1 !== null) {
+      out.entities.push({
+        type: match1[1]
+      });
+
+      if (match1[2] === 'true') {
+        out.pattern = 'yes';
+      }
+      else {
+        out.id = 'yes';
+      }
+      match1 = regExp1.exec(chunk);
+    }
+
+    var match2 = regExp2.exec(chunk);
+    var index = 0;
+    while (match2 !== null) {
+      if(out.entities[index].pattern === 'yes') {
+        out.entities[index].pattern = match2[1];
+      }
+      else {
+        out.entities[index].id = match2[1];
+      }
+      match2 = regExp2.exec(chunk);
+      index++;
+    }
+
+    var match3 = regExp3.exec(chunk);
+    while (match3 !== null) {
+      out.attributes.push(match3[1]);
+      match3 = regExp3.exec(chunk);
+    }
+
+    return out;
+  },
+
+  _parseXML: function(chunk) {
+    var objs = [];
+
+    var START_ELEMENT = '<contextElement>';
+    var END_ELEMENT = '</contextElement>';
+    var START_ATTR = '<contextAttribute>';
+    var END_ATTR = '</contextAttribute>';
+
+    var entityRegExp = /<entityId type=\"(\w+)\"\s+isPattern=\"(\w+)\">/;
+    var idRegExp = /<id>(\S+)<\/id>/;
+
+    var attrNameRegExp = /<name>(\w+)<\/name>/;
+    var typeRegExp = /<type>(\w+)<\/type>/;
+    var valueRegExp = /<contextValue>(.+)<\/contextValue>/;
+
+    var remainingStr = chunk;
+    while (true) {
+      var startElement = remainingStr.indexOf(START_ELEMENT);
+      var endElement = remainingStr.indexOf(END_ELEMENT);
+
+      if (startElement === -1) {
+        break;
+      }
+
+      var elementChunk = remainingStr.substring(
+                          startElement + START_ELEMENT.length, endElement);
+
+      var entityMatching = entityRegExp.exec(elementChunk);
+      if (!Array.isArray(entityMatching)) {
+        return null;
+      }
+      var type = entityMatching[1];
+      var isPattern = entityMatching[2];
+      var id = idRegExp.exec(elementChunk)[1];
+
+      var attrList = [];
+      var remainingAttrs = elementChunk;
+      while(true) {
+        var startAttr = remainingAttrs.indexOf(START_ATTR);
+        var endAttr = remainingAttrs.indexOf(END_ATTR);
+
+        if (startAttr === -1) {
+          break;
+        }
+
+        var attrChunk = remainingAttrs.substring(
+                                  startAttr + START_ATTR.length, endAttr);
+        
+        var attrName = attrNameRegExp.exec(attrChunk)[1];
+        
+        var attrType;
+        var typeMatch = typeRegExp.exec(attrChunk);
+        if (Array.isArray(typeMatch)) {
+          attrType = typeMatch[1];
+        }
+        var attrVal = valueRegExp.exec(attrChunk)[1];
+
+        attrList.push({
+          name: attrName,
+          type: attrType,
+          value: attrVal
+        });
+
+        remainingAttrs = remainingAttrs.substring(endAttr + END_ATTR.length);
+      }
+
+      var myObj = this._attrList2Obj(attrList);
+      myObj.type = type;
+
+      if (isPattern === 'true') {
+        myObj.pattern = id;
+      }
+      else {
+        myObj.id = id;
+      }
+
+      objs.push(myObj);
+
+      remainingStr = remainingStr.substring(endElement + END_ELEMENT.length);
+    }
+
+    if (objs.length === 1) {
+      return objs[0];
+    }
+    else if (objs.length === 0) {
+      return null;
+    }
+
+    return objs;
   }
 };
 
