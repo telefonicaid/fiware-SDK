@@ -163,8 +163,22 @@ function subscribeContext(entity, subscriptionParams, options) {
   return new Promise(function(resolve, reject) {
     var subscription = NgsiHelper.buildSubscription(entity,
                                                     subscriptionParams);
+    var resource = 'subscribeContext';
+    // If subscription Id already exists then entities and reference are
+    // removed
+    if (subscription.subscriptionId) {
+      resource = 'updateContextSubscription';
+      
+      if (subscription.entities) {
+        delete subscription.entities;
+      }
+      if (subscription.reference) {
+        delete subscription.reference;
+      }
+    }
+
     post({
-      url: self.url + '/subscribeContext',
+      url: self.url + '/' + resource,
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',

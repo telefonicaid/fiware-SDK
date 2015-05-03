@@ -281,43 +281,34 @@ var NgsiHelper = {
 
     var subscription = {
       entities: [],
-      attributes: []
+      notifyConditions: []
     };
 
     var entityList = subscription.entities;
-    var attrList = subscription.attributes;
 
     entities.forEach(function(aEntity) {
       if (Array.isArray(aEntity.attributes)) {
-        subscription.notifyConditions = [];
-
-        aEntity.attributes.forEach(function(aAttr) {
-          subscription.notifyConditions.push({
-            type: 'ONCHANGE',
-            condValues: aAttr
-          });
-          attrList.push(aAttr);
-        });
+        subscription.attributes = aEntity.attributes;
       }
 
       delete aEntity.attributes;
       entityList.push(NgsiHelper.toNgsiObject(aEntity));
     });
 
+    var subscribedAttrs = [];
     if (Array.isArray(subscriptionParams.attributes)) {
-      subscription.notifyConditions = subscription.notifyConditions || [];
-
       subscriptionParams.attributes.forEach(function(aAttr) {
-        subscription.notifyConditions.push({
-          type: 'ONCHANGE',
-          condValues: aAttr
-        });
-        attrList.push(aAttr);
+        subscribedAttrs.push(aAttr);
       });
     }
 
+    subscription.notifyConditions[0] = {
+      type: subscriptionParams.type || 'ONCHANGE',
+      condValues: subscribedAttrs
+    };
+
     for (var option in subscriptionParams) {
-      if (option === 'attributes') {
+      if (option === 'attributes' || option === 'type') {
         continue;
       }
 
@@ -327,6 +318,9 @@ var NgsiHelper = {
       }
       subscription[option] = subscriptionParams[option];
     }
+
+    // Infinite duration by default
+    subscription.duration = subscription.duration || 'P10Y';
 
     return subscription;
   },
@@ -476,16 +470,18 @@ var NgsiHelper = {
 
     var match1 = regExp1.exec(chunk);
     while (match1 !== null) {
-      out.entities.push({
+      var entity = {
         type: match1[1]
-      });
+      };
 
       if (match1[2] === 'true') {
-        out.pattern = 'yes';
+        entity.pattern = 'yes';
       }
       else {
-        out.id = 'yes';
+        entity.id = 'yes';
       }
+      out.entities.push(entity);
+      
       match1 = regExp1.exec(chunk);
     }
 

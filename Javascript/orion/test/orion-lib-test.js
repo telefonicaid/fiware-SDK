@@ -422,7 +422,9 @@ describe('Context Operations > ', function() {
     };
 
     var subscrParams = {
-      callback: 'http://130.206.83.68/orion/notif_test'
+      callback: 'http://130.206.83.68/orion/notif_test',
+      type: 'ONCHANGE', // By default if nothing said
+      attributes: ['speed']
     };
 
     it('should subscribe properly to an existent entity', function(done) {
@@ -435,7 +437,37 @@ describe('Context Operations > ', function() {
       });
     });
 
-    it('should subscribe properly to an existent attribute', function(done) {
+    it('should update an existing subscription', function(done) {
+      var subscriptionId;
+      OrionClient.subscribeContext(entity, subscrParams).then(
+        function(subscription) {
+          subscriptionId = subscription.subscriptionId;
+          var updateParams = Object.create(subscrParams);
+          updateParams.subscriptionId = subscriptionId;
+
+          return OrionClient.subscribeContext(entity, updateParams);
+      }).then(function(updatedSubscription) {
+          assert.equal(updatedSubscription.subscriptionId, subscriptionId);
+          done();
+      }).catch(function(err) {
+          done(err);
+      });
+    });
+
+    it('should return error 404 if updating a non existent subscription',
+      function(done) {
+        var params = Object.create(subscrParams);
+        params.subscriptionId = '000000000000000000000000';
+        
+        OrionClient.subscribeContext(entity, params).then(function() {
+          done('failed!');
+        }).catch(function(err) {
+            assert.equal(err.code, 404);
+            done();
+        });
+    });
+
+    it('should subscribe properly filtering by attribute', function(done) {
       var entityAttr = {
         type: CAR_TYPE,
         id: CAR_ID,
