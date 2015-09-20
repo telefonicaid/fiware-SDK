@@ -65,18 +65,9 @@ function updateContext(contextData, options) {
   }
 
   return new Promise(function(resolve, reject) {
-    var headers = {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'User-Agent': self.options.userAgent || 'Orion-Client-Library'
-    };
-    
     var params = extractServicePath(contextData, options);
     if (params.id) {
       contextData.id = params.id;
-    }
-    if (params.servicePath) {
-      headers['Fiware-ServicePath'] = params.servicePath;
     }
 
     var requestData = NgsiHelper.buildUpdate(contextData,
@@ -84,7 +75,7 @@ function updateContext(contextData, options) {
 
     post({
       url: self.url + '/updateContext',
-      headers: headers,
+      headers: fillHeaders(self.options, params.servicePath),
       body: requestData,
       json: true,
       timeout: options && options.timeout || self.options.timeout
@@ -119,25 +110,16 @@ function queryContext(queryParameters, options) {
   }
 
   return new Promise(function(resolve, reject) {
-    var headers = {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'User-Agent': self.options.userAgent || 'Orion-Client-Library'
-    };
-
     var params = extractServicePath(queryParameters, options);
     if (params.id) {
       queryParameters.id = params.id;
-    }
-    if (params.servicePath) {
-      headers['Fiware-ServicePath'] = params.servicePath;
     }
 
     var apiData = NgsiHelper.buildQuery(queryParameters);
 
     post({
       url: self.url + '/queryContext',
-      headers: headers,
+      headers: fillHeaders(self.options, params.servicePath),
       body: apiData,
       json: true,
       timeout: options && options.timeout || self.options.timeout
@@ -161,6 +143,11 @@ function subscribeContext(entity, subscriptionParams, options) {
   var self = this;
 
   return new Promise(function(resolve, reject) {
+    var params = extractServicePath(entity, options);
+    if (params.id) {
+      entity.id = params.id;
+    }
+    
     var subscription = NgsiHelper.buildSubscription(entity,
                                                     subscriptionParams);
     var resource = 'subscribeContext';
@@ -179,11 +166,7 @@ function subscribeContext(entity, subscriptionParams, options) {
 
     post({
       url: self.url + '/' + resource,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'User-Agent': self.options.userAgent || 'Orion-Client-Library'
-      },
+      headers: fillHeaders(self.options, params.servicePath),
       body: subscription,
       json: true,
       timeout: options && options.timeout || self.options.timeout
@@ -211,24 +194,23 @@ function registerContext(entity, registrationParams, options) {
   }
 
   return new Promise(function(resolve, reject) {
+    var params = extractServicePath(entity, options);
+    if (params.id) {
+      entity.id = params.id;
+    }
     var registration = NgsiHelper.buildRegistration(entity, registrationParams);
 
      post({
       url: self.url + '/registry/registerContext',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'User-Agent': self.options.userAgent || 'Orion-Client-Library'
-      },
+      headers: fillHeaders(self.options, params.servicePath),
       body: registration,
       json: true,
       timeout: options && options.timeout || self.options.timeout
     }).then(function(body) {
         if (body.registerError || body.orionError || body.errorCode) {
-          var errorCode = (body.errorCode && body.errorCode.code) ||
-                          (body.registerError &&
-                           body.registerError.errorCode) ||
-                          (body.orionError && body.orionError.code);
+          var errorCode = (body.errorCode) ||
+                          (body.registerError) ||
+                          (body.orionError);
           reject(errorCode);
         }
         else {
@@ -254,6 +236,24 @@ function extractServicePath(params, options) {
   }
 
   return out;
+}
+
+function fillHeaders(options, servicePath) {
+  var headers = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    'User-Agent': options && options.userAgent || 'Orion-Client-Library'
+  };
+  
+  if (options && options.service) {
+    headers['Fiware-Service'] = options.service;
+  }
+  
+  if (servicePath) {
+    headers['Fiware-ServicePath'] = servicePath;
+  }
+  
+  return headers;
 }
 
 OrionClient.prototype = {

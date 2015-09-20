@@ -187,11 +187,14 @@ var NgsiHelper = {
         attributeData.metadatas = [];
         for (var p in metadata) {
           var metaValue = metadata[p];
-           attributeData.metadatas.push({
+          attributeData.metadatas.push({
             name: p,
             value: metaValue,
             type: self._typeOf(metaValue)
           });
+          if (p === 'location') {
+            attributeData.type = 'coords';
+          }
         }
       }
       out.attributes.push(attributeData);

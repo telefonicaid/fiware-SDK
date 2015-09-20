@@ -1,11 +1,17 @@
 'use strict';
 
+// Server must be run with the -multiservice option (multitenant)
 const ORION_SERVER = 'http://130.206.83.68:1026/v1';
 
 var Orion = require('../orion-lib'),
     OrionClient = new Orion.Client({
       url: ORION_SERVER,
       userAgent: 'Test'
+    }),
+    OrionClientService = new Orion.Client({
+      url: ORION_SERVER,
+      userAgent: 'Test',
+      service: 'Test_Service'
     }),
     OrionHelper = Orion.NgsiHelper;
 
@@ -27,6 +33,13 @@ var contextData = {
   id: CAR_ID,
   speed: 98,
   rpm: 2000
+};
+
+var contextData2 = {
+  type: CAR_TYPE,
+  id: '8787GYV',
+  speed: 120,
+  rpm: 2500
 };
 
 var contextDataAsXML =
@@ -74,13 +87,6 @@ var requestAsXML =
     '</attributeList>' +
   '</queryContextRequest>';
 
-
-var contextData2 = {
-  type: CAR_TYPE,
-  id: '8787GYV',
-  speed: 120,
-  rpm: 2500
-};
 
 function assertEqualObj(obj1, obj2) {
   assert.deepEqual(obj1, obj2);
@@ -216,6 +222,36 @@ describe('Context Operations > ', function() {
 
       }).then(function(queryResult) {
           assert.equal(queryResult.extension, 2000);
+          done();
+      }).catch(function(err) {
+          done(err);
+      });
+    });
+    
+    it('should update context with service', function(done) {
+      // Same as contextData but in a different service and with different speed
+      // Thus the object will be different
+      const TEST_SERVICE_SPEED = 400;
+      var data = {
+        id: CAR_ID,
+        type: CAR_TYPE,
+        speed: TEST_SERVICE_SPEED
+      };
+      
+      OrionClientService.updateContext(data).then(function(updatedData) {
+        return OrionClientService.queryContext({
+          type: CAR_TYPE,
+          id: CAR_ID
+        });
+      }).then(function(queryResult) {
+          assert.equal(queryResult.speed, TEST_SERVICE_SPEED);
+          // Now query the same entity and id but in the default service
+          return OrionClient.queryContext({
+            type: CAR_TYPE,
+            id: CAR_ID
+          });
+      }).then(function(queryResult2) {
+          assert.equal(queryResult2.speed, contextData.speed);
           done();
       }).catch(function(err) {
           done(err);
@@ -547,6 +583,35 @@ describe('Context Operations > ', function() {
       }).catch(function(err) {
           done(err);
       });
+    });
+
+    it('should update an existing registration', function(done) {
+      var params = Object.create(registrationParams);
+      var registrationId;
+      OrionClient.registerContext(entity, registrationParams).then(
+        function(registration) {
+          registrationId = registration.registrationId;
+          params.registrationId = registrationId;
+          return OrionClient.registerContext(entity, params);
+      }).then(function(registration) {
+          assert.equal(registration.registrationId, registrationId);
+          done();
+      }).catch(function(err) {
+          done(err);
+      });
+    });
+
+    it('should reject with error code 404 if updating non existent',
+      function(done) {
+        var params = Object.create(registrationParams);
+        params.registrationId = '000000000000000000000000';
+        OrionClient.registerContext(entity, params).then(
+          function(registration) {
+            done('should fail!');
+        }).catch(function(err) {
+            assert.equal(err.code, 404);
+            done();
+        });
     });
 
     it('should register a context provider. simplified attribute naming',
