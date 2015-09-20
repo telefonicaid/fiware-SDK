@@ -40,7 +40,7 @@ function ngsiObj2XML() {
 function ngsiObj2XMLTree() {
   var root = new XmlBuilder('contextElement');
   var entityId = root.child('entityId').attr('type', this.type);
-  
+
   entityId.attr('isPattern', this.isPattern);
   entityId.child('id').text(this.id);
 
@@ -88,7 +88,7 @@ var NgsiHelper = {
       try {
         ngsiData = JSON.parse(chunk);
       }
-      catch(e) {
+      catch (e) {
         // If cannot be parsed as JSON then should XML
         return this._parseXML(chunk);
       }
@@ -347,12 +347,12 @@ var NgsiHelper = {
       if (Array.isArray(aEntity.attributes)) {
         aEntity.attributes.forEach(function(aAttr) {
           attrList.push(NgsiHelper._toAttr(aAttr));
-        })
+        });
         delete aEntity.attributes;
       }
       entityList.push(NgsiHelper.toNgsiObject(aEntity));
       registration.contextRegistrations.push(aRegistration);
-      
+
       // We are not checking for attribute duplicity
       if (Array.isArray(registrationParams.attributes)) {
         registrationParams.attributes.forEach(function(aAttr) {
@@ -378,9 +378,9 @@ var NgsiHelper = {
         name: attrData,
         type: 'string',
         isDomain: false
-      }
+      };
     }
-    
+
     attrData.isDomain = false;
     return attrData;
   },
@@ -405,7 +405,7 @@ var NgsiHelper = {
     var dataAsNgsi = NgsiHelper.toNgsiObject(data);
 
     var out = {
-      contextResponses: [],
+      contextResponses: []
     };
 
     out.contextResponses[0] = {
@@ -415,7 +415,7 @@ var NgsiHelper = {
         reasonPhrase: 'OK'
       }
     };
-    
+
     out.toXMLTree = ngsiResponse2XMLTree;
     out.toXML = ngsiResponse2XML;
 
@@ -432,7 +432,7 @@ var NgsiHelper = {
       try {
         parsedChunk = JSON.parse(chunk);
       }
-      catch(e) {
+      catch (e) {
         return this._parseNgsiRequestXML(chunk);
       }
     }
@@ -484,14 +484,14 @@ var NgsiHelper = {
         entity.id = 'yes';
       }
       out.entities.push(entity);
-      
+
       match1 = regExp1.exec(chunk);
     }
 
     var match2 = regExp2.exec(chunk);
     var index = 0;
     while (match2 !== null) {
-      if(out.entities[index].pattern === 'yes') {
+      if (out.entities[index].pattern === 'yes') {
         out.entities[index].pattern = match2[1];
       }
       else {
@@ -547,7 +547,7 @@ var NgsiHelper = {
 
       var attrList = [];
       var remainingAttrs = elementChunk;
-      while(true) {
+      while (true) {
         var startAttr = remainingAttrs.indexOf(START_ATTR);
         var endAttr = remainingAttrs.indexOf(END_ATTR);
 
@@ -557,9 +557,9 @@ var NgsiHelper = {
 
         var attrChunk = remainingAttrs.substring(
                                   startAttr + START_ATTR.length, endAttr);
-        
+
         var attrName = attrNameRegExp.exec(attrChunk)[1];
-        
+
         var attrType;
         var typeMatch = typeRegExp.exec(attrChunk);
         if (Array.isArray(typeMatch)) {

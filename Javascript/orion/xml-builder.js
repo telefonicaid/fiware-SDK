@@ -4,8 +4,8 @@ function serializeAttrs(attrs) {
   var out = '';
   var num = attrs.length;
 
-  for(var i = 0; i < num; i++) {
-    out += ' ' + attrs[i].name + "=" + '"' + attrs[i].value + '"';
+  for (var i = 0; i < num; i++) {
+    out += ' ' + attrs[i].name + '=' + '"' + attrs[i].value + '"';
   }
 
   return out;
@@ -16,12 +16,12 @@ function XmlBuilder(rootTagName) {
 }
 
 function Element(name, parent) {
-  this.attrs = new Array();
-  this.children = new Array();
+  this.attrs = [];
+  this.children = [];
 
   this.eleName = name;
 
-  if(parent) {
+  if (parent) {
     this.parent = parent;
     this.parent.child(this);
   }
@@ -33,28 +33,28 @@ Element.prototype = {
       name: attrName,
       value: attrVal
     });
-		return this;
+    return this;
   },
 
   child: function(theChild) {
     var ele;
 
-		if (typeof theChild === 'string') {
-			ele = new Element(theChild, this);
-		}
-		else if (typeof theChild === 'object') {
-			ele = theChild;
+    if (typeof theChild === 'string') {
+      ele = new Element(theChild, this);
+    }
+    else if (typeof theChild === 'object') {
+      ele = theChild;
       ele.parent = this;
-			this.children.push(ele);
-		}
+      this.children.push(ele);
+    }
 
     return ele;
   },
 
-	text: function(text) {
-		this.eleText = text;
-		return this;
-	},
+  text: function(text) {
+    this.eleText = text;
+    return this;
+  },
 
   build: function() {
     var out = '<';
@@ -66,12 +66,12 @@ Element.prototype = {
 
     // For each of the children serialize
     var numc = this.children.length;
-    for(var i = 0; i < numc; i++) {
+    for (var i = 0; i < numc; i++) {
       out += this.children[i].build();
     }
 
     // Text of the element
-    if(this.eleText) {
+    if (this.eleText) {
       out += this.eleText;
     }
 
@@ -79,7 +79,7 @@ Element.prototype = {
 
     return out;
   }
-}
+};
 
 XmlBuilder.prototype = {
   // Constructor for an element
@@ -91,7 +91,7 @@ XmlBuilder.prototype = {
     if (typeof theChild === 'object') {
       ele = theChild;
       ele.parent = this.root;
-			this.root.children.push(ele);
+      this.root.children.push(ele);
     }
 
     return ele;
@@ -99,7 +99,7 @@ XmlBuilder.prototype = {
 
   build: function(startWithXmlPi) {
     var out = '';
-    
+
     if (startWithXmlPi === true) {
       out += '<?xml version="1.0" charset="UTF-8"?>';
     }
@@ -107,6 +107,6 @@ XmlBuilder.prototype = {
     out += this.root.build();
     return out;
   }
-}
+};
 
 module.exports = XmlBuilder;

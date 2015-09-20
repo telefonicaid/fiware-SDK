@@ -147,7 +147,7 @@ function subscribeContext(entity, subscriptionParams, options) {
     if (params.id) {
       entity.id = params.id;
     }
-    
+
     var subscription = NgsiHelper.buildSubscription(entity,
                                                     subscriptionParams);
     var resource = 'subscribeContext';
@@ -155,7 +155,7 @@ function subscribeContext(entity, subscriptionParams, options) {
     // removed
     if (subscription.subscriptionId) {
       resource = 'updateContextSubscription';
-      
+
       if (subscription.entities) {
         delete subscription.entities;
       }
@@ -244,15 +244,15 @@ function fillHeaders(options, servicePath) {
     'Content-Type': 'application/json',
     'User-Agent': options && options.userAgent || 'Orion-Client-Library'
   };
-  
+
   if (options && options.service) {
     headers['Fiware-Service'] = options.service;
   }
-  
+
   if (servicePath) {
     headers['Fiware-ServicePath'] = servicePath;
   }
-  
+
   return headers;
 }
 
