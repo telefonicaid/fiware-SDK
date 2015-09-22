@@ -27,8 +27,9 @@ const EXT_PROPERTY_MAP = {
   'pattern': 'pattern'
 };
 
-function Attribute(value, metadata) {
+function Attribute(value, type, metadata) {
   this.value = value;
+  this.type = type;
   this.metadata = metadata;
 }
 
@@ -178,7 +179,7 @@ var NgsiHelper = {
       var attributeData = {
         name: aKey,
         value: value,
-        type: self._typeOf(value)
+        type: self._typeOf(object[aKey])
       };
 
       // Now dealing with metadata (if present)
@@ -187,16 +188,25 @@ var NgsiHelper = {
         attributeData.metadatas = [];
         for (var p in metadata) {
           var metaValue = metadata[p];
+
           attributeData.metadatas.push({
             name: p,
             value: metaValue,
             type: self._typeOf(metaValue)
           });
-          if (p === 'location') {
-            attributeData.type = 'coords';
-          }
         }
       }
+
+      // Geo-referenced data special case. Adding metadata.
+      if (attributeData.type === 'coords') {
+        attributeData.metadatas = attributeData.metadatas || [];
+        attributeData.metadatas.push({
+          name: 'location',
+          type: 'string',
+          value: 'WGS84'
+        });
+      }
+
       out.attributes.push(attributeData);
     });
 
@@ -225,15 +235,34 @@ var NgsiHelper = {
     return out;
   },
 
-  _typeOf: function(value) {
-    var out = typeof value;
+  _typeOf: function(attrData) {
+    if (typeof attrData === 'undefined') {
+      return null;
+    }
 
+    if (typeof attrData !== 'object') {
+      return typeof attrData;
+    }
+
+    if (attrData.type && attrData.type === 'geo:point') {
+      return 'coords';
+    }
+
+    if (attrData.type) {
+      return attrData.type;
+    }
+
+    var value = attrData.value;
+    if (!value) {
+      value = attrData;
+    }
+
+    var out = typeof value;
     if (out === 'object') {
       if (typeof value.getDate === 'function') {
         out = 'date';
       }
     }
-
     return out;
   },
 
@@ -253,11 +282,16 @@ var NgsiHelper = {
         if (Array.isArray(aAttr.metadatas)) {
           var metaObj = Object.create(null);
           aAttr.metadatas.forEach(function(aMeta) {
-            metaObj[aMeta.name] = self._toValue(aMeta);
+            if (aMeta.name === 'location' && aMeta.value === 'WGS84') {
+              aAttr.type = 'geo:point';
+            }
+            else {
+              metaObj[aMeta.name] = self._toValue(aMeta);
+            }
           });
           // If the attribute has metadata, then the value is a compound one
           // represented by the Attribute object
-          value = new Attribute(value, metaObj);
+          value = new Attribute(value, aAttr.type, metaObj);
         }
 
         out[aAttr.name] = value;
@@ -392,13 +426,66 @@ var NgsiHelper = {
     return request;
   },
 
-  buildQuery: function(queryParameters) {
-    return {
+  buildQuery: function(queryParameters, options) {
+    // If no id is provided then it is assumed any
+    var params = JSON.parse(JSON.stringify(queryParameters));
+    if (!params.id && !params.pattern) {
+      params.pattern = '.*';
+    }
+
+    var out = {
       entities: [
-        this.toNgsiObject(queryParameters)
+        this.toNgsiObject(params)
       ],
       attributes: queryParameters.attributes
     };
+
+    if (options && options.location) {
+      var location = options.location;
+      var scopeValue = Object.create(null);
+      var theCoords = location.coords.split(',');
+
+      out.restriction = {
+        scopes: [
+          {
+            type: 'FIWARE::Location',
+            value: scopeValue
+          }
+        ]
+      };
+
+      var geometryData = location.geometry.split(';');
+      var geometry = geometryData[0].trim();
+      switch (geometry) {
+        case 'Circle':
+          scopeValue.circle = {
+            centerLatitude: theCoords[0].trim(),
+            centerLongitude: theCoords[1].trim(),
+            radius: String(location.radius)
+          };
+        break;
+
+        case 'Polygon':
+          var vertices = [];
+          scopeValue.polygon = {
+            'vertices': vertices
+          };
+          for (var j = 0; j < theCoords.length; j += 2) {
+            vertices.push({
+              latitude: theCoords[j].trim(),
+              longitude: theCoords[j + 1].trim()
+            });
+          }
+        break;
+      }
+      if (geometryData[1] && geometryData[1].trim() === 'external') {
+        scopeValue[geometry.toLowerCase()].inverted = 'true';
+      }
+    }
+
+    console.log(JSON.stringify(out));
+
+    return out;
   },
 
   buildNgsiResponse: function(data) {

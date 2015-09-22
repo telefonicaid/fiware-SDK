@@ -115,7 +115,7 @@ function queryContext(queryParameters, options) {
       queryParameters.id = params.id;
     }
 
-    var apiData = NgsiHelper.buildQuery(queryParameters);
+    var apiData = NgsiHelper.buildQuery(queryParameters, options);
 
     post({
       url: self.url + '/queryContext',
@@ -247,6 +247,10 @@ function fillHeaders(options, servicePath) {
 
   if (options && options.service) {
     headers['Fiware-Service'] = options.service;
+  }
+
+  if (options && options.token) {
+    headers['X-Auth-Token'] = options.token;
   }
 
   if (servicePath) {

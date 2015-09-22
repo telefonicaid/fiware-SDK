@@ -2,6 +2,7 @@
 
 // Server must be run with the -multiservice option (multitenant)
 const ORION_SERVER = 'http://130.206.83.68:1026/v1';
+const ORION_TESTBED_SERVER = 'http://orion.lab.fiware.org:1026/v1';
 
 var Orion = require('../orion-lib'),
     OrionClient = new Orion.Client({
@@ -13,6 +14,11 @@ var Orion = require('../orion-lib'),
       userAgent: 'Test',
       service: 'Test_Service'
     }),
+    OrionTestBedService = new Orion.Client({
+      url: ORION_TESTBED_SERVER,
+      userAgent: 'Test',
+      token: 'nBA8EYe0wrzI8nVISMLMlR1CpUWfsF'
+    }),
     OrionHelper = Orion.NgsiHelper;
 
 var assert = require('assert');
@@ -22,6 +28,7 @@ var fs = require("fs");
 const CAR_ID = 'P-9878KLA';
 const CAR_TYPE = 'Car';
 const PARK_TYPE = 'Park';
+const RESTAURANT_TYPE = 'Restaurant';
 
 const VALLADOLID = '/Spain/Valladolid';
 const PARKS = 'PublicParks';
@@ -40,6 +47,14 @@ var contextData2 = {
   id: '8787GYV',
   speed: 120,
   rpm: 2500
+};
+
+const TARGET_LOCATION = '41.3763726, 2.1864475';   
+var geoContextData = {
+  type: RESTAURANT_TYPE,
+  id: 'r12345',
+  speed: 135,
+  location: new Orion.Attribute(TARGET_LOCATION, 'geo:point')
 };
 
 var contextDataAsXML =
@@ -93,7 +108,7 @@ function assertEqualObj(obj1, obj2) {
 }
 
 describe('NGSI Helper > ', function() {
-
+  
   function assertNgsiObject(obj) {
     assert.equal(obj.type, CAR_TYPE);
     assert.equal(obj.id, CAR_ID);
@@ -123,6 +138,20 @@ describe('NGSI Helper > ', function() {
     }
 
     assertEqualObj(contextData, object);
+  });
+  
+  it('should parse NGSI Responses - geolocation data', function() {
+    var jsonChunk = fs.readFileSync(__dirname + '/ngsi-response-location.json', 'UTF-8');
+    var object = OrionHelper.parse(jsonChunk);
+
+    if (object.inError) {
+      assert.fail('It cannot be in error');
+      return;
+    }
+
+    assert.equal(object.location.type, 'geo:point');
+    assert.equal(object.location.value, '34, 48');
+    assert.equal(!object.metadata, true);
   });
 
   it('should parse NGSI Responses in XML', function() {
@@ -165,6 +194,17 @@ describe('NGSI Helper > ', function() {
 
     assertNgsiObject(ngsiObject.contextElements[0]);
   });
+  
+  it('should convert objects to NGSI - geolocation', function() {
+    var object = geoContextData;
+    var ngsiObject = OrionHelper.toNgsi(object);
+    var geoAttr = ngsiObject.contextElements[0].attributes[1];
+    
+    assert.equal(ngsiObject.contextElements[0].type, RESTAURANT_TYPE);
+    assert.equal(geoAttr.type, 'coords');
+    assert.equal(geoAttr.coords, geoContextData.coords);
+    assert.equal(geoAttr.metadatas[0].value, 'WGS84');
+  });
 
   it('should build NGSI Responses', function() {
     var object = contextData;
@@ -183,7 +223,7 @@ describe('NGSI Helper > ', function() {
 });
 
 describe('Context Operations > ', function() {
-  this.timeout(5000);
+  this.timeout(10000);
 
   describe('UPDATE', function(done) {
 
@@ -312,7 +352,7 @@ describe('Context Operations > ', function() {
     };
 
     before(function(done) {
-      OrionClient.updateContext(contextData).then(() => done(), ()=> done());
+      OrionClient.updateContext(contextData).then(() => done(), () => done());
     });
 
     it('should query context data', function(done) {
@@ -323,12 +363,91 @@ describe('Context Operations > ', function() {
           done(err);
       });
     });
+    
+    it('should query context data using a token', function(done) {
+      var tokenQuery = {
+        id: 'urn:smartsantander:testbed:357'
+      };
+      
+      OrionTestBedService.queryContext(tokenQuery).then(function(retrievedData) {
+        assert.equal(retrievedData.type, 'santander:soundacc');
+        done();
+      }).catch(function(err) {
+          done(err);
+      });
+    });
+    
+    it('should query context data by location - circle', function(done) {
+      var geoQuery = {
+        type: RESTAURANT_TYPE
+      };
+      var locationOptions = {
+        location: {
+          coords: TARGET_LOCATION,
+          geometry: 'Circle',
+          radius: 1000
+        }
+      };
+      
+      OrionClient.updateContext(geoContextData).then(function() {
+        return OrionClient.queryContext(geoQuery, locationOptions);    
+      }).then(function(retrievedData) {
+          assert.equal(retrievedData.id, 'r12345');
+          assert.equal(retrievedData.location.value, TARGET_LOCATION);
+          assert.equal(retrievedData.location.type, 'geo:point');
+          done();
+      }).catch(function(err) {
+        done(err);
+      });
+    });
+    
+    it('should query context data by location - inverted', function(done) {
+      var geoQuery = {
+        type: RESTAURANT_TYPE
+      };
+      var locationOptions = {
+        location: {
+          coords: TARGET_LOCATION,
+          geometry: 'Circle;external',
+          radius: 1000
+        }
+      };
+      
+      OrionClient.queryContext(geoQuery, locationOptions).then(function(retrievedData) {
+        console.log(retrievedData);
+        assert.equal(retrievedData, null);
+        done();
+      }).catch(function(err) {
+        done(err);
+      });
+    });
+    
+    it('should query context data by location - polygon', function(done) {
+      var geoQuery = {
+        type: RESTAURANT_TYPE
+      };
+      var locationOptions = {
+        location: {
+          // Roughly speaking a polygon which denotes Spain
+          coords: '42.90,-9.26, 42.35,1.45, 37.21,-7.40, 37.98,-1.15',
+          geometry: 'Polygon'
+        }
+      };
+      
+      OrionClient.queryContext(geoQuery, locationOptions).then(function(retrievedData) {
+        assert.equal(retrievedData, null);
+        done();
+      }).catch(function(err) {
+        console.log(JSON.stringify(err));
+        done(err);
+      });
+    });
 
     it('should query context data with associated metadata', function(done) {
       var contextData2 = {
         type: CAR_TYPE,
         id: '8787GYH',
-        speed: new Orion.Attribute(120, {
+        speed: new Orion.Attribute(120, 'Speed', {
           accuracy: 0.9
         })
       };
@@ -352,7 +471,7 @@ describe('Context Operations > ', function() {
       var contextData3 = {
         type: CAR_TYPE,
         id: '9999GYH',
-        speed: new Orion.Attribute(150, {
+        speed: new Orion.Attribute(150, 'Speed', {
           timestamp: date
         })
       };
@@ -366,6 +485,27 @@ describe('Context Operations > ', function() {
           assert.equal(retrievedData.speed.value, 150);
           assert.equal(retrievedData.speed.metadata.timestamp.getTime(),
                        date.getTime());
+          done();
+      }).catch(function(error) {
+          done(error);
+      });
+    });
+    
+    it('should query context data with date as data', function(done) {
+      var date = new Date();
+      var contextData3 = {
+        type: CAR_TYPE,
+        id: '1111GYH',
+        timestamp: date
+      };
+
+      OrionClient.updateContext(contextData3).then(function() {
+        return OrionClient.queryContext({
+          type: CAR_TYPE,
+          id: '1111GYH'
+        });
+      }).then(function(retrievedData) {
+          assert.equal(retrievedData.timestamp.getTime(), date.getTime());
           done();
       }).catch(function(error) {
           done(error);

@@ -1,0 +1,34 @@
+{
+  "contextResponses": [
+    {
+      "contextElement": {
+        "attributes": [
+          {
+            "name": "speed",
+            "type": "float",
+            "value": "98"
+          },
+          {
+            "name": "location",
+            "type": "coords",
+            "value": "34, 48",
+            "metadatas": [
+              {
+                "name": "location",
+                "type": "string",
+                "value": "WGS84"
+              }
+            ]
+          }
+        ],
+        "type": "Car",
+        "isPattern": false,
+        "id": "P-9878KLA"
+      },
+      "statusCode": {
+        "code": 200,
+        "reasonPhrase": "OK"
+      }
+    }
+  ]
+}
