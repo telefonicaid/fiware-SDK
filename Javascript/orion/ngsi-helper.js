@@ -110,7 +110,8 @@ var NgsiHelper = {
 
     var statusCode = (ngsiData.errorCode && ngsiData.errorCode.code) ||
                       (ngsiData.statusCode && ngsiData.statusCode.code) ||
-                    (Array.isArray(responses) && responses[0].statusCode.code);
+                    (Array.isArray(responses) &&
+                     responses[0].statusCode && responses[0].statusCode.code);
     if (statusCode != 200) {
       if (statusCode == 404) {
         return null;
@@ -524,7 +525,7 @@ var NgsiHelper = {
       }
     }
 
-    var entities = parsedChunk.entities;
+    var entities = parsedChunk.entities || parsedChunk.contextElements;
     entities.forEach(function(aEntity) {
       var obj = NgsiHelper._toObject(aEntity);
       out.entities.push(obj);

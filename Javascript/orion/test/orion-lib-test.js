@@ -23,7 +23,7 @@ var Orion = require('../orion-lib'),
 
 var assert = require('assert');
 
-var fs = require("fs");
+var fs = require('fs');
 
 const CAR_ID = 'P-9878KLA';
 const CAR_TYPE = 'Car';
@@ -57,51 +57,8 @@ var geoContextData = {
   location: new Orion.Attribute(TARGET_LOCATION, 'geo:point')
 };
 
-var contextDataAsXML =
-  '<contextElement>' +
-    '<entityId type="Car" isPattern="false">' +
-      '<id>P-9878KLA</id>' +
-    '</entityId>' +
-    '<contextAttributeList>' +
-      '<contextAttribute>' +
-        '<name>speed</name>' +
-        '<type>number</type>' +
-        '<contextValue>98</contextValue>' +
-      '</contextAttribute>' +
-      '<contextAttribute>' +
-        '<name>rpm</name>' +
-        '<type>number</type>' +
-        '<contextValue>2000</contextValue>' +
-      '</contextAttribute>' +
-    '</contextAttributeList>' +
-  '</contextElement>';
-
-var contextResponseAsXML =
-  '<contextResponseList>' +
-    '<contextElementResponse>' + contextDataAsXML +
-      '<statusCode>' +
-        '<code>200</code>' +
-        '<reasonPhrase>OK</reasonPhrase>' +
-      '</statusCode>' +
-    '</contextElementResponse>' +
-  '</contextResponseList>';
-
-var requestAsXML =
-  '<queryContextRequest>' +
-    '<entityIdList>' +
-      '<entityId type="Street" isPattern="false">' +
-        '<id>Street4</id>' +
-      '</entityId>' +
-      '<entityId type="Street" isPattern="false">' +
-        '<id>Street6</id>' +
-      '</entityId>' +
-    '</entityIdList>' +
-    '<attributeList>' +
-      '<attribute>temperature</attribute>' +
-      '<attribute>humidity</attribute>' +
-    '</attributeList>' +
-  '</queryContextRequest>';
-
+// XML Data for testing purposes
+var XMLData = require('./xml-data');
 
 function assertEqualObj(obj1, obj2) {
   assert.deepEqual(obj1, obj2);
@@ -125,7 +82,7 @@ describe('NGSI Helper > ', function() {
 
   it('should convert NGSI Objects to XML', function() {
     var objAsNgsiXML = OrionHelper.toNgsiObject(contextData).toXML();
-    assert.equal(objAsNgsiXML, contextDataAsXML);
+    assert.equal(objAsNgsiXML, XMLData.contextDataAsXML);
   });
 
   it('should parse NGSI Responses', function() {
@@ -167,7 +124,7 @@ describe('NGSI Helper > ', function() {
   });
 
   it('should parse providing requests in XML', function() {
-    var out = OrionHelper.parseNgsiRequest(requestAsXML);
+    var out = OrionHelper.parseNgsiRequest(XMLData.requestAsXML);
     
     assert.equal(out.entities.length, 2);
     assert.equal(out.attributes.length, 2);
@@ -177,6 +134,32 @@ describe('NGSI Helper > ', function() {
 
     assert.equal(out.entities[1].type, 'Street');
     assert.ok(typeof out.entities[1].pattern === 'undefined');
+  });
+  
+  it('should parse providing requests in JSON', function() {
+    var requestAsJson = {
+      "contextElements":[
+        {
+          "type":"House",
+          "isPattern":"false",
+          "id":"Customer-6790",
+          "attributes":[
+            {
+              "name":"boilerStatus",
+              "type":"string",
+              "value":"OF"
+            }
+          ]
+        }
+      ],
+      "updateAction":"UPDATE"
+    };
+    
+    var out = OrionHelper.parseNgsiRequest(requestAsJson);
+    
+    assert.equal(out.entities.length, 1);
+    assert.equal(out.entities[0].id, 'Customer-6790');
+    assert.equal(out.entities[0].boilerStatus, 'OF');
   });
 
   it('should detect NGSI Responses in error', function() {
@@ -218,7 +201,7 @@ describe('NGSI Helper > ', function() {
     var object = contextData;
     var ngsiResponse = OrionHelper.buildNgsiResponse(object).toXML();
 
-    assert.equal(ngsiResponse, contextResponseAsXML);
+    assert.equal(ngsiResponse, XMLData.contextResponseAsXML);
   })
 });
 
