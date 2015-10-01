@@ -121,6 +121,9 @@ var NgsiHelper = {
         errorCode: statusCode
       };
     }
+    else if (!ngsiData.contextResponses) {
+      return null;
+    }
 
     if (responses.length === 1) {
       return this._toObject(responses[0].contextElement);
@@ -227,10 +230,11 @@ var NgsiHelper = {
 
   _toValue: function(ngsiAttr) {
     var out = ngsiAttr.value;
-    if (ngsiAttr.type === 'number') {
+    if (ngsiAttr.type === 'number' || ngsiAttr.type === 'integer') {
       out = Number(out);
     }
-    else if (ngsiAttr.type === 'date') {
+    else if (ngsiAttr.type === 'date' ||
+             ngsiAttr.type === 'urn:x-ogc:def:trs:IDAS:1.0:ISO8601') {
       out = new Date(out);
     }
     return out;
@@ -483,8 +487,6 @@ var NgsiHelper = {
         scopeValue[geometry.toLowerCase()].inverted = 'true';
       }
     }
-
-    console.log(JSON.stringify(out));
 
     return out;
   },

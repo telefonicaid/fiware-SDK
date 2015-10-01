@@ -28,7 +28,7 @@ var fs = require('fs');
 const CAR_ID = 'P-9878KLA';
 const CAR_TYPE = 'Car';
 const PARK_TYPE = 'Park';
-const RESTAURANT_TYPE = 'Restaurant';
+const RESTAURANT_TYPE = 'Car';
 
 const VALLADOLID = '/Spain/Valladolid';
 const PARKS = 'PublicParks';
@@ -397,7 +397,6 @@ describe('Context Operations > ', function() {
       };
       
       OrionClient.queryContext(geoQuery, locationOptions).then(function(retrievedData) {
-        console.log(retrievedData);
         assert.equal(retrievedData, null);
         done();
       }).catch(function(err) {
@@ -421,7 +420,6 @@ describe('Context Operations > ', function() {
         assert.equal(retrievedData, null);
         done();
       }).catch(function(err) {
-        console.log(JSON.stringify(err));
         done(err);
       });
     });

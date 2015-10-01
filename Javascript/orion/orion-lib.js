@@ -91,7 +91,9 @@ function updateContext(contextData, options) {
         }
 
         resolve(contextData);
-    }, reject);
+    }, reject).catch(function(err) {
+      reject(err);
+    });
   });
 }
 
@@ -134,7 +136,9 @@ function queryContext(queryParameters, options) {
           parsed = [];
         }
         resolve(parsed);
-    }, reject);
+    }, reject).catch(function(err) {
+      reject(err);
+    });
   });
 }
 
@@ -180,7 +184,9 @@ function subscribeContext(entity, subscriptionParams, options) {
         else {
           resolve(body.subscribeResponse);
         }
-    }, reject);
+    }, reject).catch(function(err) {
+      reject(err);
+    });
   });
 }
 
@@ -216,7 +222,9 @@ function registerContext(entity, registrationParams, options) {
         else {
           resolve(body);
         }
-    }, reject);
+    }, reject).catch(function(err) {
+      reject(err);
+    });
   });
 }
 
