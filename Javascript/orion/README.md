@@ -1,3 +1,4 @@
+[![node badge](https://img.shields.io/node/v/fiware-orion-client.svg)](https://www.npmjs.com/package/fiware-orion-client)
 [![npm badge](https://img.shields.io/npm/dm/fiware-orion-client.svg)](https://www.npmjs.com/package/fiware-orion-client)
 [![license badge](https://img.shields.io/npm/l/fiware-orion-client.svg)](https://opensource.org/licenses/MIT)
 
