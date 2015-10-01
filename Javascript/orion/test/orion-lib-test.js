@@ -643,7 +643,7 @@ describe('Context Operations > ', function() {
     it('should subscribe properly by providing a pattern', function(done) {
       var entityAttr = {
         type: CAR_TYPE,
-        pattern: '*',
+        pattern: '.*',
         attributes: ['speed']
       };
 

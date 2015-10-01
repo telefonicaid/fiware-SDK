@@ -1,7 +1,8 @@
 [![npm badge](https://nodei.co/npm/fiware-orion-client.png?downloads=true)](https://www.npmjs.com/package/fiware-orion-client)
 
 This library is **under development** and it is aimed at making it easier for Javascript developers to manage context information.
-It is not intended to cover all the functionalities offered by the Orion REST API and you might need to use the latter in certain cases.
+It is not intended to cover all the functionalities offered by the Orion REST API and you might need to
+use the latter in certain cases.
 
 The library is aligned with best practices of Javascript development:
 * makes use of Promises
@@ -63,6 +64,8 @@ const ORION_SERVER = 'http://130.206.83.68:1026/v1';
 var Orion = require('fiware-orion-client'),
     OrionClient = new Orion.Client({
       url: ORION_SERVER,
+      service: 'smartGondor',      // Fiware-Service
+      token: 'aTokenForTheBroker', 
       userAgent: 'IOT-Agent',
       timeout: 5000
     });
@@ -117,7 +120,7 @@ OrionClient.subscribeContext(entity, params).then(function(subscription) {
 ```js
 var entity = {
   type: 'Car',
-  pattern: '*',
+  pattern: '.*',
   attributes: [{
     name: 'buildYear',
     type: typeof ''
