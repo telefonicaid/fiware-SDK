@@ -202,7 +202,25 @@ describe('NGSI Helper > ', function() {
     var ngsiResponse = OrionHelper.buildNgsiResponse(object).toXML();
 
     assert.equal(ngsiResponse, XMLData.contextResponseAsXML);
-  })
+  });
+  
+  it('should generate query URLs by id', function() {
+    var query = {
+      id: '7890'
+    };
+    var url = OrionHelper.toURL(query);
+    
+    assert.equal(url, 'contextEntities/7890');
+  });
+  
+  it('should generate query URLs by type', function() {
+    var query = {
+      type: 'Car'
+    };
+    var url = OrionHelper.toURL(query);
+    
+    assert.equal(url, 'contextEntityTypes/Car');
+  });
 });
 
 describe('Context Operations > ', function() {
