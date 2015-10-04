@@ -1,7 +1,7 @@
 {
   "name": "fiware-orion-client",
   "main": "orion.js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "homepage": "https://github.com/jmcanterafonseca/FIWARE-sdk/Javascript/orion",
   "authors": [
     "Jose M. Cantera <jmcanterafonseca@gmail.com>"
