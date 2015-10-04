@@ -23,7 +23,7 @@ npm install fiware-orion-client
 or
 
 ````
-bower install https://github.com/jmcanterafonseca/FIWARE-sdk/raw/master/Javascript/fiware-orion-client-browser.zip
+bower install https://github.com/telefonicaid/fiware-SDK/raw/master/Javascript/fiware-orion-client-browser.zip
 ````
 
 ### NGSI Helper
@@ -95,12 +95,32 @@ var queryOptions = {
   id: 'P-9873K'
 }
 OrionClient.queryContext(queryOptions).then(function(contextData) {
-  console.log('Context Properly retrieved: ', JSON.stringify(contextData));
+  console.log('Context data retrieved: ', JSON.stringify(contextData));
 }, function(error) {
     console.log('Error while querying context: ', error);
 });
 
-````
+```
+
+#### Query Context (Geolocation)
+
+```js
+var geoQuery = {
+  type: 'Restaurant'
+};
+var options = {
+  location: {
+    coords: '41.3763726, 2.1864475',
+    geometry: 'Circle',
+    radius: 1000
+  }
+};
+OrionClient.queryContext(geoQuery, options).then(function(contextData) {
+  console.log('Context data retrieved: ', JSON.stringify(contextData));
+}, function(error) {
+    console.log('Error while querying context: ', error);
+});
+```
 
 #### Subscribe to Context
 
@@ -117,7 +137,7 @@ OrionClient.subscribeContext(entity, params).then(function(subscription) {
 }, function(error) {
     console.log('Error while subscribing context: ', error);
 });
-````
+```
 
 #### Register Context Provider
 
@@ -141,4 +161,4 @@ OrionClient.registerContext(entity, params).then(function(registration) {
   });
 });
 
-````
+```
