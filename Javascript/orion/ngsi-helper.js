@@ -15,8 +15,6 @@
 
 'use strict';
 
-var XmlBuilder = require('./xml-builder.js');
-
 const PROPERTY_MAP = {
   'type': 'type',
   'id' : 'id'
@@ -39,6 +37,8 @@ function ngsiObj2XML() {
 }
 
 function ngsiObj2XMLTree() {
+  var XmlBuilder =  require('./xml-builder.js');
+
   var root = new XmlBuilder('contextElement');
   var entityId = root.child('entityId').attr('type', this.type);
 
@@ -60,6 +60,8 @@ function ngsiObj2XMLTree() {
 
 // Converts a NGSI Response to XML
 function ngsiResponse2XMLTree() {
+  var XmlBuilder = require('./xml-builder.js');
+  
   var root = new XmlBuilder('contextResponseList');
 
   this.contextResponses.forEach(function(aResponse) {
@@ -539,9 +541,16 @@ var NgsiHelper = {
   },
 
   toURL: function(queryParameters) {
-    var out = ['contextEntities'];
+    var resourceName = 'contextEntities';
+    var path = queryParameters.id;
+    
+    if (!queryParameters.id && queryParameters.type) {
+      resourceName = 'contextEntityTypes';
+      path = queryParameters.type;
+    }
+    var out = [resourceName];
 
-    out.push(encodeURIComponent(queryParameters.id));
+    out.push(encodeURIComponent(path));
 
     if (queryParameters.attributes) {
       out.push('attributes');
@@ -696,5 +705,5 @@ var theWindow = this.window || null;
 if (!theWindow) {
   exports.NgsiHelper = NgsiHelper;
   exports.Attribute = Attribute;
-  exports.XmlBuilder = XmlBuilder;
+  exports.XmlBuilder = require('./xml-builder.js');
 }
