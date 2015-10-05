@@ -4,14 +4,23 @@
 /* exported OrionClient */
 
 var OrionClient = (function() {
+  var currentScript = document.currentScript || (function() {
+    var scripts = document.getElementsByTagName('script');
+    return scripts[scripts.length - 1];
+  })();
+  
   function loadHelper() {
     if (window.NgsiHelper) {
       return Promise.resolve();
     }
 
     return new Promise(function(resolve, reject) {
+      // We need to know from what folder is going to be loaded
       var script = document.createElement('script');
-      script.src = 'ngsi-helper.js';
+      var mainLibSrc = currentScript.src;
+      var folder = mainLibSrc.substr(0, mainLibSrc.lastIndexOf('/'));
+      
+      script.src =  folder + '/' + 'ngsi-helper.js';
       script.onload = resolve;
       script.onerror = reject;
 

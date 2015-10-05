@@ -1,0 +1,31 @@
+<!doctype html>
+  
+<html>
+  <head>
+    <meta charset="UTF-8">
+    
+    <script defer src="../orion.js"></script>
+    
+    <script>
+      function doIt() {
+        var Client = new OrionClient({
+          url: 'http://130.206.83.68:1026/v1'
+        });
+        
+        Client.queryContext({
+          type:'Car'
+        }).then(function(data) {
+            document.querySelector('textarea').value = JSON.stringify(data);
+        }).catch(function(err) {
+            console.error('Error while querying: ', err); 
+        });
+      }
+    </script>
+  </head>
+  
+  <body>
+    <button type=button onclick="doIt()">Test</button><br>
+    
+    <textarea rows=20 cols=80></textarea>
+  </body>
+</html>
