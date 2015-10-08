@@ -232,13 +232,18 @@ var NgsiHelper = {
 
   _toValue: function(ngsiAttr) {
     var out = ngsiAttr.value;
-    if (ngsiAttr.type === 'number' || ngsiAttr.type === 'integer') {
-      out = Number(out);
+    switch (ngsiAttr.type) {
+      case 'number':
+      case 'integer':
+      case 'float':
+        out = Number(out);
+      break;
+      case 'date':
+      case 'urn:x-ogc:def:trs:IDAS:1.0:ISO8601':
+        out = new Date(out);
+      break;
     }
-    else if (ngsiAttr.type === 'date' ||
-             ngsiAttr.type === 'urn:x-ogc:def:trs:IDAS:1.0:ISO8601') {
-      out = new Date(out);
-    }
+    
     return out;
   },
 
@@ -296,6 +301,10 @@ var NgsiHelper = {
               metaObj[aMeta.name] = self._toValue(aMeta);
             }
           });
+          // If finally there is no other metadata reset the metaObj
+          if (Object.keys(metaObj).length === 0) {
+            metaObj = undefined;
+          }
           // If the attribute has metadata, then the value is a compound one
           // represented by the Attribute object
           value = new Attribute(value, aAttr.type, metaObj);
