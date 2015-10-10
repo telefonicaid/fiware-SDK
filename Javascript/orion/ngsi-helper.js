@@ -189,7 +189,7 @@ var NgsiHelper = {
       };
 
       // Now dealing with metadata (if present)
-      var metadata = object[aKey].metadata;
+      var metadata = object[aKey] && object[aKey].metadata;
       if (metadata) {
         attributeData.metadatas = [];
         for (var p in metadata) {
@@ -239,8 +239,12 @@ var NgsiHelper = {
         out = Number(out);
       break;
       case 'date':
+      case 'datetime':
       case 'urn:x-ogc:def:trs:IDAS:1.0:ISO8601':
         out = new Date(out);
+        if (isNaN(out.getTime())) {
+          out = null;
+        }
       break;
     }
     
