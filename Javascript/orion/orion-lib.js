@@ -91,7 +91,7 @@ function updateContext(contextData, options) {
         }
 
         resolve(contextData);
-    }, reject).catch(function(err) {
+    }, reject).catch (function(err) {
       reject(err);
     });
   });
@@ -111,6 +111,11 @@ function queryContext(queryParameters, options) {
     return Promise.resolve(null);
   }
 
+  var parseOptions = {};
+  if (options && options.GeoJSON) {
+    parseOptions.GeoJSON = true;
+  }
+
   return new Promise(function(resolve, reject) {
     var params = extractServicePath(queryParameters, options);
     if (params.id) {
@@ -126,7 +131,7 @@ function queryContext(queryParameters, options) {
       json: true,
       timeout: options && options.timeout || self.options.timeout
     }).then(function(body) {
-        var parsed = NgsiHelper.parse(body);
+        var parsed = NgsiHelper.parse(body, parseOptions);
 
         if (parsed && parsed.inError) {
           reject(parsed.errorCode);
@@ -136,7 +141,7 @@ function queryContext(queryParameters, options) {
           parsed = [];
         }
         resolve(parsed);
-    }, reject).catch(function(err) {
+    }, reject).catch (function(err) {
       reject(err);
     });
   });
@@ -184,7 +189,7 @@ function subscribeContext(entity, subscriptionParams, options) {
         else {
           resolve(body.subscribeResponse);
         }
-    }, reject).catch(function(err) {
+    }, reject).catch (function(err) {
       reject(err);
     });
   });
@@ -222,7 +227,7 @@ function registerContext(entity, registrationParams, options) {
         else {
           resolve(body);
         }
-    }, reject).catch(function(err) {
+    }, reject).catch (function(err) {
       reject(err);
     });
   });

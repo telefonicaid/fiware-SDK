@@ -8,7 +8,7 @@ var OrionClient = (function() {
     var scripts = document.getElementsByTagName('script');
     return scripts[scripts.length - 1];
   })();
-  
+
   function loadHelper() {
     if (window.NgsiHelper) {
       return Promise.resolve();
@@ -19,8 +19,8 @@ var OrionClient = (function() {
       var script = document.createElement('script');
       var mainLibSrc = currentScript.src;
       var folder = mainLibSrc.substr(0, mainLibSrc.lastIndexOf('/'));
-      
-      script.src =  folder + '/' + 'ngsi-helper.js';
+
+      script.src = folder + '/' + 'ngsi-helper.js';
       script.onload = resolve;
       script.onerror = reject;
 

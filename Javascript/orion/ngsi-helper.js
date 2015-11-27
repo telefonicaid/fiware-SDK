@@ -37,7 +37,7 @@ function ngsiObj2XML() {
 }
 
 function ngsiObj2XMLTree() {
-  var XmlBuilder =  require('./xml-builder.js');
+  var XmlBuilder = require('./xml-builder.js');
 
   var root = new XmlBuilder('contextElement');
   var entityId = root.child('entityId').attr('type', this.type);
@@ -61,7 +61,7 @@ function ngsiObj2XMLTree() {
 // Converts a NGSI Response to XML
 function ngsiResponse2XMLTree() {
   var XmlBuilder = require('./xml-builder.js');
-  
+
   var root = new XmlBuilder('contextResponseList');
 
   this.contextResponses.forEach(function(aResponse) {
@@ -83,7 +83,7 @@ function ngsiResponse2XML() {
 
 
 var NgsiHelper = {
-  parse: function(chunk) {
+  parse: function(chunk, options) {
     var self = this;
 
     var ngsiData = chunk;
@@ -128,12 +128,12 @@ var NgsiHelper = {
     }
 
     if (responses.length === 1) {
-      return this._toObject(responses[0].contextElement);
+      return this._toObject(responses[0].contextElement, options);
     }
     else {
       var out = [];
       responses.forEach(function(aResponse) {
-        out.push(self._toObject(aResponse.contextElement));
+        out.push(self._toObject(aResponse.contextElement, options));
       });
 
       return out;
@@ -247,7 +247,7 @@ var NgsiHelper = {
         }
       break;
     }
-    
+
     return out;
   },
 
@@ -282,7 +282,7 @@ var NgsiHelper = {
     return out;
   },
 
-  _attrList2Obj: function(attrList) {
+  _attrList2Obj: function(attrList, options) {
     var self = this;
 
     var out = Object.create(null);
@@ -291,15 +291,30 @@ var NgsiHelper = {
       return out;
     }
 
+    var geoJson = false;
+    if (options && options.GeoJSON) {
+      geoJson = true;
+    }
+
     if (Array.isArray(attrList)) {
       attrList.forEach(function(aAttr) {
         var value = self._toValue(aAttr);
+        var geoJsonValue = null;
 
         if (Array.isArray(aAttr.metadatas)) {
           var metaObj = Object.create(null);
           aAttr.metadatas.forEach(function(aMeta) {
             if (aMeta.name === 'location' && aMeta.value === 'WGS84') {
-              aAttr.type = 'geo:point';
+              if (geoJson) {
+                var coords = value.split(',');
+                geoJsonValue = {
+                  type: 'Point',
+                  coordinates: [parseFloat(coords[0]), parseFloat(coords[1])]
+                };
+              }
+              else {
+                aAttr.type = 'geo:point';
+              }
             }
             else {
               metaObj[aMeta.name] = self._toValue(aMeta);
@@ -314,19 +329,19 @@ var NgsiHelper = {
           value = new Attribute(value, aAttr.type, metaObj);
         }
 
-        out[aAttr.name] = value;
+        out[aAttr.name] = geoJsonValue || value;
       });
     }
 
     return out;
   },
 
-  _toObject: function(contextElement) {
+  _toObject: function(contextElement, options) {
     if (!contextElement) {
       return null;
     }
 
-    var out = this._attrList2Obj(contextElement.attributes);
+    var out = this._attrList2Obj(contextElement.attributes, options);
     out.type = contextElement.type;
     out.id = contextElement.id;
 
@@ -556,7 +571,7 @@ var NgsiHelper = {
   toURL: function(queryParameters) {
     var resourceName = 'contextEntities';
     var path = queryParameters.id;
-    
+
     if (!queryParameters.id && queryParameters.type) {
       resourceName = 'contextEntityTypes';
       path = queryParameters.type;

@@ -110,6 +110,25 @@ describe('NGSI Helper > ', function() {
     assert.equal(object.location.value, '34, 48');
     assert.equal(!object.metadata, true);
   });
+  
+  it('should parse NGSI Responses - geolocation data - GeoJSON', function() {
+    var jsonChunk = fs.readFileSync(__dirname + '/ngsi-response-location.json', 'UTF-8');
+    var options = {
+      'GeoJSON': true
+    };
+    var object = OrionHelper.parse(jsonChunk, options);
+
+    if (object.inError) {
+      assert.fail('It cannot be in error');
+      return;
+    }
+
+    assert.equal(object.location.type, 'Point');
+    assert.equal(object.location.coordinates.length, 2);
+    assert.equal(object.location.coordinates[0], 34);
+    assert.equal(object.location.coordinates[1], 48);
+    assert.equal(!object.metadata, true);
+  });
 
   it('should parse NGSI Responses in XML', function() {
     var xmlChunk = fs.readFileSync(__dirname + '/ngsi-response.xml', 'UTF-8');
@@ -396,6 +415,32 @@ describe('Context Operations > ', function() {
           assert.equal(retrievedData.id, 'r12345');
           assert.equal(retrievedData.location.value, TARGET_LOCATION);
           assert.equal(retrievedData.location.type, 'geo:point');
+          done();
+      }).catch(function(err) {
+        done(err);
+      });
+    });
+    
+    it('should query context data by location - circle - GeoJSON', function(done) {
+      var geoQuery = {
+        type: RESTAURANT_TYPE
+      };
+      var locationOptions = {
+        location: {
+          coords: TARGET_LOCATION,
+          geometry: 'Circle',
+          radius: 1000
+        },
+        GeoJSON: true
+      };
+      
+      OrionClient.updateContext(geoContextData).then(function() {
+        return OrionClient.queryContext(geoQuery, locationOptions);    
+      }).then(function(retrievedData) {
+          assert.equal(retrievedData.id, 'r12345');
+          assert.equal(retrievedData.location.coordinates[0], 41.3763726);
+          assert.equal(retrievedData.location.coordinates[1], 2.1864475);
+          assert.equal(retrievedData.location.type, 'Point');
           done();
       }).catch(function(err) {
         done(err);
