@@ -555,6 +555,21 @@ describe('Context Operations > ', function() {
           done(error);
       });
     });
+    
+    it('should query context data with limit and offset', function(done) {
+      OrionClient.queryContext({
+        type: CAR_TYPE
+      }, {
+            offset: 0,
+            limit: 1
+      }).then(function(data) {
+          // As limit is one the library returns the object directly
+          assert.equal(typeof data, 'object');
+          done();
+      }).catch(function(error) {
+          done(error);
+      });
+    });
 
     it('should query context data with attribute restriction', function(done) {
       queryParams.attributes = ['speed'];

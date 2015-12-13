@@ -123,9 +123,23 @@ function queryContext(queryParameters, options) {
     }
 
     var apiData = NgsiHelper.buildQuery(queryParameters, options);
+    
+    var url = self.url + '/queryContext';
+    if (options) {
+      if (options.limit || options.offset) {
+        url += '?';
+      }
+    
+      if (options.limit) {
+        url += 'limit' + '=' + options.limit;
+      }
+      if (options.offset) {
+        url += 'offset' + '=' + options.offset;
+      }
+    }
 
     post({
-      url: self.url + '/queryContext',
+      url: url,
       headers: fillHeaders(self.options, params.servicePath),
       body: apiData,
       json: true,
