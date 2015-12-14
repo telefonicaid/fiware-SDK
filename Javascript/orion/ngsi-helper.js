@@ -309,7 +309,7 @@ var NgsiHelper = {
                 var coords = value.split(',');
                 geoJsonValue = {
                   type: 'Point',
-                  coordinates: [parseFloat(coords[0]), parseFloat(coords[1])]
+                  coordinates: [parseFloat(coords[1]), parseFloat(coords[0])]
                 };
               }
               else {

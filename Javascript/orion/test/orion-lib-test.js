@@ -125,8 +125,8 @@ describe('NGSI Helper > ', function() {
 
     assert.equal(object.location.type, 'Point');
     assert.equal(object.location.coordinates.length, 2);
-    assert.equal(object.location.coordinates[0], 34);
-    assert.equal(object.location.coordinates[1], 48);
+    assert.equal(object.location.coordinates[1], 34);
+    assert.equal(object.location.coordinates[0], 48);
     assert.equal(!object.metadata, true);
   });
 
@@ -438,8 +438,8 @@ describe('Context Operations > ', function() {
         return OrionClient.queryContext(geoQuery, locationOptions);    
       }).then(function(retrievedData) {
           assert.equal(retrievedData.id, 'r12345');
-          assert.equal(retrievedData.location.coordinates[0], 41.3763726);
-          assert.equal(retrievedData.location.coordinates[1], 2.1864475);
+          assert.equal(retrievedData.location.coordinates[1], 41.3763726);
+          assert.equal(retrievedData.location.coordinates[0], 2.1864475);
           assert.equal(retrievedData.location.type, 'Point');
           done();
       }).catch(function(err) {
