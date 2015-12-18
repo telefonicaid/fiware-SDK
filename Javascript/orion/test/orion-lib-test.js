@@ -486,6 +486,30 @@ describe('Context Operations > ', function() {
         done(err);
       });
     });
+    
+    it('should query context data by filtering it', function(done) {
+      var query = {
+        type: CAR_TYPE
+      };
+      
+      var carData = {
+        type: CAR_TYPE,
+        id: '12345G',
+        speed: 135,
+        brand: 'Mercedes'
+      };
+      
+      OrionClient.updateContext(carData).then(function() {
+        return OrionClient.queryContext(query, {
+          q: 'brand == Mercedes'
+        });
+      }).then(function(result) {
+          assert.equal(result.id, carData.id);
+          done();
+      }).catch(function(error) {
+          done(error);
+      });
+    });
 
     it('should query context data with associated metadata', function(done) {
       var contextData2 = {

@@ -474,20 +474,34 @@ var NgsiHelper = {
       ],
       attributes: queryParameters.attributes
     };
+    
+    if (options && options.q) {
+      out.restriction = {
+        scopes: [
+          {
+            type: 'FIWARE::StringQuery',
+            value: options.q
+          }
+        ]
+      };
+    }
 
     if (options && options.location) {
       var location = options.location;
       var scopeValue = Object.create(null);
       var theCoords = location.coords.split(',');
+      
+      if (!out.restriction) {
+        out.restriction = {
+          scopes: []
+        };
+      }
 
-      out.restriction = {
-        scopes: [
-          {
-            type: 'FIWARE::Location',
-            value: scopeValue
-          }
-        ]
-      };
+      out.restriction.scopes.push({
+        type: 'FIWARE::Location',
+        value: scopeValue
+      });
+      
 
       var geometryData = location.geometry.split(';');
       var geometry = geometryData[0].trim();

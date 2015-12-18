@@ -122,6 +122,22 @@ OrionClient.queryContext(geoQuery, options).then(function(contextData) {
 });
 ```
 
+#### Query Context (Filters)
+
+```js
+var geoQuery = {
+  type: 'Restaurant'
+};
+var options = {
+  q: 'brand == Mercedes'
+};
+OrionClient.queryContext(geoQuery, options).then(function(contextData) {
+  console.log('Context data retrieved: ', JSON.stringify(contextData));
+}, function(error) {
+    console.log('Error while querying context: ', error);
+});
+```
+
 #### Subscribe to Context
 
 ```js
