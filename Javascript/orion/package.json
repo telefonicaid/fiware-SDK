@@ -1,6 +1,6 @@
 {
   "name": "fiware-orion-client",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "description": "A client Library that makes it easier to get access to Orion Context Broker (part of the FIWARE platform)",
   "main": "orion-lib.js",
   "directories": {
