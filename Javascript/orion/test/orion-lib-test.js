@@ -384,6 +384,24 @@ describe('Context Operations > ', function() {
       });
     });
     
+    it('should query multiple context data by id', function(done) {
+      OrionClient.updateContext(contextData2).then(function() {
+        return OrionClient.queryContext([
+          {
+            id: contextData.id,
+          },
+          {
+            id: contextData2.id
+          }
+        ]);
+      }).then(function(result) {
+          assert.equal(result.length, 2);
+          done();
+      }).catch(function(err) {
+          done(err);
+      });
+    });
+    
     it('should query context data using a token', function(done) {
       var tokenQuery = {
         id: 'urn:smartsantander:testbed:357'

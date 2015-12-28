@@ -462,6 +462,20 @@ var NgsiHelper = {
   },
 
   buildQuery: function(queryParameters, options) {
+    // TODO: Consider better approach for dealing with multi query
+    if (Array.isArray(queryParameters)) {
+      var out = {
+        entities: []
+      }
+      var self = this;
+      
+      queryParameters.forEach(function(aParameter) {
+        out.entities.push(self.toNgsiObject(aParameter))
+      });
+      
+      return out;
+    }
+    
     // If no id is provided then it is assumed any
     var params = JSON.parse(JSON.stringify(queryParameters));
     if (!params.id && !params.pattern) {
@@ -531,7 +545,7 @@ var NgsiHelper = {
         scopeValue[geometry.toLowerCase()].inverted = 'true';
       }
     }
-
+    
     return out;
   },
 
